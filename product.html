@@ -1,0 +1,530 @@
+<!DOCTYPE html> 
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luxury Collection | Panun Poshak</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        /* --- 1. PREMIUM CART DRAWER STYLES --- */
+        .cart-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
+            z-index: 10000; opacity: 0; pointer-events: none; transition: 0.4s ease;
+        }
+        .cart-overlay.open { opacity: 1; pointer-events: auto; }
+
+        .cart-drawer {
+            position: fixed; top: 0; right: -450px; width: 100%; max-width: 420px; height: 100%;
+            background: rgba(15, 15, 15, 0.95); /* Deep Dark Background */
+            border-left: 1px solid rgba(197, 160, 89, 0.3); /* Gold Border */
+            z-index: 10001;
+            transition: 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+            display: flex; flex-direction: column;
+            box-shadow: -10px 0 40px rgba(0,0,0,0.8);
+        }
+        .cart-drawer.open { right: 0; }
+
+        /* HEADER */
+        .cart-header {
+            padding: 25px; border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .cart-header h2 { font-family: 'Playfair Display', serif; color: #C5A059; margin: 0; font-size: 1.8rem; }
+        .close-cart { background: none; border: none; color: #888; font-size: 2rem; cursor: pointer; transition: 0.2s; line-height: 1; }
+        .close-cart:hover { color: white; transform: rotate(90deg); }
+
+        /* ITEMS AREA */
+        .cart-items { flex: 1; overflow-y: auto; padding: 25px; }
+        .cart-items::-webkit-scrollbar { width: 4px; }
+        .cart-items::-webkit-scrollbar-thumb { background: #333; }
+
+        /* ITEM CARD */
+        .c-item {
+            display: flex; gap: 15px; margin-bottom: 20px; 
+            background: rgba(255,255,255,0.03); 
+            padding: 12px; border-radius: 12px; 
+            border: 1px solid transparent; transition: 0.3s;
+        }
+        .c-item:hover { border-color: rgba(197, 160, 89, 0.2); background: rgba(255,255,255,0.05); }
+        
+        .c-img { 
+            width: 70px; height: 70px; object-fit: cover; 
+            border-radius: 8px; border: 1px solid #333; 
+        }
+        .c-details { flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+        
+        .c-name { color: #eee; font-size: 0.95rem; margin: 0 0 4px 0; font-weight: 500; }
+        .c-price { color: #C5A059; font-size: 0.9rem; font-family: 'Playfair Display', serif; }
+
+        /* CONTROLS */
+        .c-controls { display: flex; align-items: center; justify-content: space-between; margin-top: 5px; }
+        
+        .qty-mini { 
+            display: flex; align-items: center; background: #000; 
+            border: 1px solid #333; border-radius: 50px; padding: 2px;
+        }
+        .qty-mini button { 
+            width: 24px; height: 24px; border-radius: 50%; border: none; 
+            background: #222; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem;
+            transition: 0.2s;
+        }
+        .qty-mini button:hover { background: #C5A059; color: black; }
+        .qty-mini span { padding: 0 10px; font-size: 0.85rem; font-weight: bold; color: white; min-width: 20px; text-align: center; }
+
+        .del-btn { color: #666; font-size: 1rem; cursor: pointer; background: none; border: none; transition: 0.2s; }
+        .del-btn:hover { color: #ff4d4d; transform: scale(1.1); }
+
+        /* COUPON & FOOTER */
+        .cart-footer { padding: 25px; border-top: 1px solid rgba(255,255,255,0.05); background: #0a0a0a; }
+        
+        /* Coupon Box */
+        .coupon-section { margin-bottom: 20px; display: flex; gap: 8px; }
+        .coupon-input {
+            flex: 1; background: rgba(255,255,255,0.05); border: 1px solid #333; 
+            color: white; padding: 10px 15px; border-radius: 8px; outline: none; 
+            text-transform: uppercase; letter-spacing: 1px; font-size: 0.85rem;
+        }
+        .coupon-input:focus { border-color: #C5A059; }
+        .coupon-btn {
+            background: transparent; border: 1px solid #C5A059; color: #C5A059; 
+            padding: 0 20px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.8rem;
+            transition: 0.3s;
+        }
+        .coupon-btn:hover { background: #C5A059; color: black; }
+
+        .cart-total-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem; color: #aaa; }
+        .cart-final-total { display: flex; justify-content: space-between; font-size: 1.4rem; color: white; font-weight: bold; margin-top: 15px; margin-bottom: 20px; border-top: 1px dashed #333; padding-top: 15px; font-family: 'Playfair Display', serif;}
+        
+        .checkout-btn {
+            width: 100%; padding: 16px; 
+            background: linear-gradient(135deg, #C5A059 0%, #9e7f43 100%);
+            color: black; font-weight: bold; border: none; border-radius: 50px; 
+            cursor: pointer; letter-spacing: 2px; text-transform: uppercase;
+            box-shadow: 0 5px 20px rgba(197, 160, 89, 0.3); transition: 0.3s;
+        }
+        .checkout-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(197, 160, 89, 0.5); color: white; }
+
+        /* GALLERY THUMBS (From previous step) */
+        .thumb-gallery { display: flex; gap: 12px; margin-top: 20px; overflow-x: auto; padding-bottom: 5px; }
+        .thumb-btn { width: 80px; height: 80px; flex-shrink: 0; border-radius: 12px; overflow: hidden; border: 2px solid transparent; cursor: pointer; transition: 0.3s; opacity: 0.6; background: #111; }
+        .thumb-btn img { width: 100%; height: 100%; object-fit: cover; }
+        .thumb-btn.active { border-color: #C5A059; opacity: 1; transform: translateY(-3px); }
+    </style>
+</head>
+<body>
+
+    <div id="cursor-dot" class="cursor-dot" style="background: #C5A059; width: 6px; height: 6px; border-radius: 50%; position: fixed; pointer-events: none; z-index: 999999;"></div>
+    <div id="cursor-outline" class="cursor-outline" style="border: 1px solid #C5A059; width: 40px; height: 40px; border-radius: 50%; position: fixed; pointer-events: none; z-index: 999999;"></div>
+
+    <header>
+        <div class="header-top">
+            <a href="index.html" class="logo">PANUN POSHAK</a>
+            <div class="search-box">
+                <input type="text" id="global-search" placeholder="Search for Pherans, Shawls...">
+                <button onclick="runSearch()">🔍</button>
+            </div>
+            <div style="display:flex; gap:20px; align-items:center;">
+                <a href="tracker.html" style="color:#C5A059; text-decoration:none; font-size:0.8rem; white-space:nowrap;">TRACK ORDER</a>
+                <div class="cart-icon" onclick="openCartDrawer()">🛒 <span id="cart-count">0</span></div>
+            </div>
+        </div>
+        <nav class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="shop.html">Shop All</a>
+            <a href="shop.html?q=pheran">Pherans</a>
+            <a href="shop.html?q=shawl">Shawls</a>
+            <a href="shop.html?q=bags">Bags</a>
+            <a href="shop.html?q=men">Men</a>
+            <a href="about.html">Our Story</a>
+        </nav>
+    </header>
+
+    <div class="breadcrumbs" id="breadcrumbs" style="max-width:1300px; margin:20px auto; padding:0 40px; color:#666; font-size:0.85rem;">
+        <a href="index.html" style="color:#888; text-decoration:none;">Home</a> &gt; <a href="shop.html" style="color:#888; text-decoration:none;">Shop</a> &gt; <span id="bc-name">Loading...</span>
+    </div>
+
+    <div class="product-container">
+        <div>
+            <div class="p-image-box"><img id="p-img" src="" alt="Product"></div>
+            <div id="thumb-list" class="thumb-gallery"></div>
+        </div>
+
+        <div class="p-info">
+            <span class="p-cat" id="p-cat">Collection</span>
+            <h1 class="p-title" id="p-name">Loading...</h1>
+            <div class="p-price" id="p-price">...</div>
+            <p class="p-desc" id="p-desc">Handcrafted with precision.</p>
+
+            <div class="control-group" id="action-wrapper">
+                <button id="btn-add" onclick="firstAdd()" class="track-btn btn-bag">ADD TO BAG</button>
+                <div id="qty-panel" class="qty-selector">
+                    <button class="qty-btn" onclick="updateQty(-1)">-</button>
+                    <span id="qty-display">1</span>
+                    <button class="qty-btn" onclick="updateQty(1)">+</button>
+                </div>
+            </div>
+
+            <button onclick="buyNow()" class="confirm-btn btn-buy" style="width:100%; margin-top:15px; background:transparent; border:1px solid #C5A059; color:#C5A059; padding:15px; font-weight:bold; cursor:pointer;">BUY NOW</button>
+            <div style="margin-top:20px; font-size:0.8rem; color:#666; display:flex; gap:20px;">
+                <span>✓ Authentic Cashmere</span> <span>✓ 7-Day Returns</span> <span>✓ Secure Shipping</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="reviews-container">
+        <h2 class="section-title">Customer Reviews</h2>
+        <div class="write-review-box">
+            <h4 style="color:white; margin:0 0 10px 0;">Write a Review</h4>
+            <div class="star-rating" id="star-box">
+                <span onclick="setRating(1)">★</span><span onclick="setRating(2)">★</span><span onclick="setRating(3)">★</span><span onclick="setRating(4)">★</span><span onclick="setRating(5)">★</span>
+            </div>
+            <textarea id="review-text" placeholder="Share your experience..." style="width:100%; background:rgba(0,0,0,0.3); margin-top:15px; height:80px; color:white; padding:10px; border:1px solid #333;"></textarea>
+            <button onclick="submitReview()" class="track-btn" style="width:auto; padding:10px 30px; margin-top:15px; font-size:0.8rem; background:#C5A059; border:none; font-weight:bold;">POST REVIEW</button>
+        </div>
+        <div id="reviews-list"><p style="text-align:center; color:#666;">Loading...</p></div>
+    </div>
+
+    <nav class="bottom-bar">
+        <a href="index.html" class="bar-item">🏠 <small>Home</small></a>
+        <a href="tracker.html" class="bar-item">🚚 <small>Track</small></a>
+        <div class="bar-item" onclick="openCartDrawer()">
+          🛒 <span id="cart-count-bar" style="background:#C5A059; color:black; padding:2px 6px; border-radius:50%; font-size:0.8rem; position:absolute; top:5px; right:30px;">0</span>
+          <small>Bag</small>
+        </div>
+    </nav>
+
+    <div class="cart-overlay" id="cart-overlay" onclick="closeCartDrawer()"></div>
+    <div class="cart-drawer" id="cart-drawer">
+        <div class="cart-header">
+            <h2>Your Bag</h2>
+            <button class="close-cart" onclick="closeCartDrawer()">&times;</button>
+        </div>
+        
+        <div class="cart-items" id="drawer-items">
+            </div>
+        
+        <div class="cart-footer">
+            <div class="coupon-section">
+                <input type="text" id="coupon-code" class="coupon-input" placeholder="Coupon Code">
+                <button onclick="applyCoupon()" class="coupon-btn">APPLY</button>
+            </div>
+            <div id="coupon-msg" style="font-size:0.8rem; color:#25D366; margin-bottom:10px; display:none;"></div>
+
+            <div class="cart-total-row">
+                <span>Subtotal</span>
+                <span id="subtotal-price">₹0</span>
+            </div>
+            <div class="cart-total-row" id="discount-row" style="display:none; color:#C5A059;">
+                <span>Discount</span>
+                <span id="discount-amount">-₹0</span>
+            </div>
+            <div class="cart-final-total">
+                <span>Total</span>
+                <span id="drawer-total" style="color:#C5A059;">₹0</span>
+            </div>
+            
+            <button onclick="goToCheckout()" class="checkout-btn">CHECKOUT SECURELY</button>
+        </div>
+    </div>
+
+    <footer class="site-footer">
+        <div class="footer-content">
+            <div class="footer-brand">PANUN POSHAK</div>
+            <div class="footer-links">
+                <a href="about.html" class="footer-link-item">Our Story</a>
+                <a href="https://wa.me/919103463033" target="_blank" class="footer-link-item">WhatsApp</a>
+                <a href="https://instagram.com/panu.nposhak" target="_blank" class="footer-link-item">Instagram</a>
+                <a href="mailto:poshakpanun@gmail.com" class="footer-link-item">Email Support</a>
+            </div>
+            <div class="footer-divider"></div>
+            <p class="copyright">© 2026 Panun Poshak. Heritage Reimagined.<br>Made with ❤️ in Srinagar, Kashmir.</p>
+        </div>
+    </footer>
+
+    <script src="firebase-config.js"></script>
+    <script>
+        if (typeof firebase === 'undefined' || !firebase.apps.length) { console.error("Firebase not loaded! Check firebase-config.js"); }
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const currentProductId = urlParams.get('id');
+        let userRating = 5;
+        let allProducts = [];
+        let appliedDiscount = 0; // % discount
+
+        // SEARCH
+        function runSearch() {
+            const query = document.getElementById('global-search').value;
+            if(query) window.location.href = `shop.html?q=${encodeURIComponent(query)}`;
+        }
+        document.getElementById('global-search').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') runSearch();
+        });
+
+        // INIT
+        document.addEventListener('DOMContentLoaded', async function() {
+            if(!currentProductId) { return; }
+            
+            const cursorDot = document.getElementById("cursor-dot");
+            const cursorOutline = document.getElementById("cursor-outline");
+            if(cursorDot && cursorOutline) {
+                window.addEventListener("mousemove",(e)=>{
+                    cursorDot.style.top=`${e.clientY}px`; cursorDot.style.left=`${e.clientX}px`;
+                    cursorOutline.animate({top:`${e.clientY}px`,left:`${e.clientX}px`},{duration:200,fill:"forwards"});
+                });
+            }
+
+            try {
+                const snap = await db.collection("products").get();
+                allProducts = snap.docs.map(d => ({id:d.id, ...d.data()}));
+            } catch (e) { console.log("Error loading product list", e); }
+
+            checkCartState();
+
+            try {
+                const doc = await db.collection("products").doc(currentProductId).get();
+                if(doc.exists) {
+                    const p = doc.data();
+                    document.getElementById("p-name").innerText = p.name;
+                    document.getElementById("p-price").innerText = "₹" + Number(p.price).toLocaleString();
+                    const mainImg = document.getElementById("p-img");
+                    mainImg.src = p.img || p.image;
+                    mainImg.onerror = function() { this.src = 'https://via.placeholder.com/500?text=No+Image'; };
+
+                    // GALLERY LOGIC
+                    const galleryBox = document.getElementById("thumb-list");
+                    let imageList = [];
+                    if(p.img) imageList.push(p.img);
+                    if(p.images && Array.isArray(p.images)) {
+                        p.images.forEach(url => { if(url !== p.img) imageList.push(url); });
+                    }
+                    if(imageList.length > 1) {
+                        imageList.forEach((src, idx) => {
+                            galleryBox.innerHTML += `<div class="thumb-btn ${idx===0?'active':''}" onclick="changeMainImage('${src}', this)"><img src="${src}"></div>`;
+                        });
+                    }
+
+                    document.getElementById("p-cat").innerText = p.category || "Exclusive Collection";
+                    if(p.description) document.getElementById("p-desc").innerText = p.description;
+                    document.getElementById("breadcrumbs").innerHTML = `<a href="index.html" style="color:#888; text-decoration:none;">Home</a> &gt; <a href="shop.html" style="color:#888; text-decoration:none;">Shop</a> &gt; <span style="color:#C5A059;">${p.name}</span>`;
+
+                    if (p.soldOut) {
+                        document.getElementById('action-wrapper').style.display = 'none';
+                        document.querySelector('.btn-buy').style.display = 'none';
+                        const soldMsg = document.createElement('div');
+                        soldMsg.innerHTML = "🚫 CURRENTLY SOLD OUT";
+                        soldMsg.style.cssText = "background: rgba(255, 77, 77, 0.1); border: 1px solid #ff4d4d; color: #ff4d4d; padding: 20px; text-align: center; font-weight: bold; margin-top: 30px; border-radius: 10px;";
+                        document.querySelector('.p-info').appendChild(soldMsg);
+                        document.getElementById("p-img").style.filter = "grayscale(100%)";
+                        document.getElementById("p-img").style.opacity = "0.7";
+                    }
+                }
+            } catch (err) { console.error("Error fetching product:", err); }
+            
+            loadReviews(); highlightStars(5); 
+        });
+
+        window.changeMainImage = function(src, btn) {
+            document.getElementById("p-img").src = src;
+            document.querySelectorAll('.thumb-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+
+        // --- CART LOGIC ---
+        function checkCartState() {
+            let cart = JSON.parse(localStorage.getItem("cart")) || [];
+            const count = cart.filter(id => id === currentProductId).length;
+            const btnAdd = document.getElementById("btn-add");
+            const qtyPanel = document.getElementById("qty-panel");
+            const qtyDisplay = document.getElementById("qty-display");
+
+            if (count > 0) { btnAdd.style.display = "none"; qtyPanel.style.display = "flex"; qtyDisplay.innerText = count; } 
+            else { btnAdd.style.display = "block"; qtyPanel.style.display = "none"; }
+            
+            if(document.getElementById("cart-count")) document.getElementById("cart-count").innerText = cart.length;
+            if(document.getElementById("cart-count-bar")) document.getElementById("cart-count-bar").innerText = cart.length;
+        }
+
+        function firstAdd() {
+            let cart = JSON.parse(localStorage.getItem("cart")) || [];
+            cart.push(currentProductId);
+            localStorage.setItem("cart", JSON.stringify(cart));
+            checkCartState(); openCartDrawer(); 
+        }
+
+        function updateQty(change) {
+            let cart = JSON.parse(localStorage.getItem("cart")) || [];
+            if (change === 1) cart.push(currentProductId);
+            else { const index = cart.indexOf(currentProductId); if (index > -1) cart.splice(index, 1); }
+            localStorage.setItem("cart", JSON.stringify(cart));
+            checkCartState();
+        }
+
+        function buyNow() {
+            localStorage.setItem("checkout_type", "single");
+            localStorage.setItem("buy_now_id", currentProductId);
+            window.location.href = "checkout.html";
+        }
+
+        // --- PREMIUM DRAWER + COUPONS ---
+        function openCartDrawer() {
+            const overlay = document.getElementById('cart-overlay');
+            const drawer = document.getElementById('cart-drawer');
+            const container = document.getElementById('drawer-items');
+            
+            container.innerHTML = "";
+            let cart = JSON.parse(localStorage.getItem("cart")) || [];
+            let subtotal = 0;
+
+            if(cart.length === 0) {
+                container.innerHTML = "<p style='color:#666; text-align:center; margin-top:50px;'>Your bag is empty.</p>";
+                updatePrices(0);
+            } else {
+                const counts = {};
+                cart.forEach(id => counts[id] = (counts[id] || 0) + 1);
+
+                Object.keys(counts).forEach(id => {
+                    const product = allProducts.find(p => p.id === id);
+                    if(product) {
+                        const itemTotal = Number(product.price) * counts[id];
+                        subtotal += itemTotal;
+                        let displayImg = product.img || product.images?.[0];
+
+                        container.innerHTML += `
+                            <div class="c-item">
+                                <img src="${displayImg}" class="c-img" onerror="this.src='https://via.placeholder.com/80?text=Item'">
+                                <div class="c-details">
+                                    <div>
+                                        <h4 class="c-name">${product.name}</h4>
+                                        <span class="c-price">₹${Number(product.price).toLocaleString()}</span>
+                                    </div>
+                                    <div class="c-controls">
+                                        <div class="qty-mini">
+                                            <button onclick="modifyCart('${id}', -1)">-</button>
+                                            <span>${counts[id]}</span>
+                                            <button onclick="modifyCart('${id}', 1)">+</button>
+                                        </div>
+                                        <button class="del-btn" onclick="removeFromCart('${id}')" title="Remove">✕</button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+                updatePrices(subtotal);
+            }
+            overlay.classList.add('open');
+            drawer.classList.add('open');
+        }
+
+        function applyCoupon() {
+            const code = document.getElementById("coupon-code").value.trim().toUpperCase();
+            const msg = document.getElementById("coupon-msg");
+            
+            // SIMULATED BACKEND LOGIC
+            if(code === "PANUN10") {
+                appliedDiscount = 10; // 10%
+                msg.style.display = "block";
+                msg.innerText = "✓ 10% Discount Applied!";
+                msg.style.color = "#25D366";
+                openCartDrawer(); // Refresh totals
+            } else {
+                appliedDiscount = 0;
+                msg.style.display = "block";
+                msg.innerText = "Invalid Coupon Code";
+                msg.style.color = "#ff4d4d";
+                openCartDrawer(); // Refresh totals
+            }
+        }
+
+        function updatePrices(subtotal) {
+            document.getElementById("subtotal-price").innerText = "₹" + subtotal.toLocaleString();
+            
+            if(appliedDiscount > 0) {
+                const discountVal = (subtotal * appliedDiscount) / 100;
+                const final = subtotal - discountVal;
+                
+                document.getElementById("discount-row").style.display = "flex";
+                document.getElementById("discount-amount").innerText = "-₹" + discountVal.toLocaleString();
+                document.getElementById("drawer-total").innerText = "₹" + final.toLocaleString();
+                
+                // SAVE FOR CHECKOUT
+                localStorage.setItem("cart_discount_percent", appliedDiscount);
+            } else {
+                document.getElementById("discount-row").style.display = "none";
+                document.getElementById("drawer-total").innerText = "₹" + subtotal.toLocaleString();
+                localStorage.setItem("cart_discount_percent", 0);
+            }
+        }
+
+        function closeCartDrawer() {
+            document.getElementById('cart-overlay').classList.remove('open');
+            document.getElementById('cart-drawer').classList.remove('open');
+        }
+
+        function modifyCart(id, change) {
+            let cart = JSON.parse(localStorage.getItem("cart")) || [];
+            if(change === 1) cart.push(id);
+            else { const index = cart.indexOf(id); if(index > -1) cart.splice(index, 1); }
+            localStorage.setItem("cart", JSON.stringify(cart));
+            refreshUI(); openCartDrawer();
+        }
+
+        function removeFromCart(id) {
+            let cart = JSON.parse(localStorage.getItem("cart")) || [];
+            cart = cart.filter(itemId => itemId !== id);
+            localStorage.setItem("cart", JSON.stringify(cart));
+            refreshUI(); openCartDrawer();
+        }
+
+        function refreshUI() { checkCartState(); }
+
+        function goToCheckout() {
+            const cart = JSON.parse(localStorage.getItem("cart")) || [];
+            if(cart.length === 0) return alert("Cart is empty");
+            localStorage.setItem("checkout_type", "cart");
+            window.location.href = "checkout.html";
+        }
+
+        // --- REVIEWS ---
+        function setRating(n) { userRating = n; highlightStars(n); }
+        function highlightStars(n) {
+            const stars = document.getElementById("star-box").children;
+            for(let i=0; i<5; i++) { if(i < n) stars[i].style.color = "#C5A059"; else stars[i].style.color = "#444"; }
+        }
+        function submitReview() {
+            const text = document.getElementById("review-text").value;
+            const user = auth.currentUser;
+            if(!user) return alert("Please Login to review.");
+            if(!text) return alert("Write a comment.");
+            db.collection("reviews").add({
+                productId: currentProductId, user: user.displayName || "Verified Customer",
+                rating: userRating, comment: text, timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+                document.getElementById("review-text").value = ""; loadReviews(); alert("Review Posted!");
+            });
+        }
+        function loadReviews() {
+            const list = document.getElementById("reviews-list");
+            db.collection("reviews").where("productId", "==", currentProductId).orderBy("timestamp", "desc").get().then(snap => {
+                  list.innerHTML = "";
+                  if(snap.empty) { list.innerHTML = "<p style='color:#444; text-align:center;'>No reviews yet.</p>"; return; }
+                  snap.forEach(doc => {
+                      const r = doc.data();
+                      const stars = "★".repeat(r.rating);
+                      const initial = r.user.charAt(0).toUpperCase();
+                      list.innerHTML += `<div class="review-card"><div class="reviewer-avatar">${initial}</div><div style="flex:1;"><div style="display:flex; justify-content:space-between;"><strong style="color:white; font-size:1rem;">${r.user}</strong><span style="color:#C5A059;">${stars}</span></div><p style="color:#aaa; font-size:0.9rem; margin-top:5px;">${r.comment}</p></div></div>`;
+                  });
+              });
+        }
+    </script>
+</body>
+</html>

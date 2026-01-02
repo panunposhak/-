@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panun Poshak | Enter the World</title>
+    <link rel="stylesheet" href="style.css"> 
+    
+    <style>
+        /* --- EXCLUSIVE HOMEPAGE STYLES --- */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden; 
+            background: #050505; /* Deep Black Base */
+        }
+
+        /* 1. THE SCROLLING BACKGROUND */
+        .marquee-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1; 
+            display: flex;
+            flex-direction: column; 
+            opacity: 0.25; /* DARKER: Makes the text pop much more */
+            filter: grayscale(30%) contrast(1.2); /* FILM LOOK: Cinematic effect */
+        }
+
+        /* The Scrolling Rows */
+        .marquee-row {
+            display: flex;
+            width: 200%; /* Wide for loop */
+            height: 50%; /* Two equal rows */
+            gap: 20px; /* SPACE BETWEEN IMAGES */
+            padding: 10px 0; /* Vertical spacing */
+        }
+
+        .marquee-row img {
+            width: 18vw; /* Wider, better sizing */
+            height: 100%;
+            object-fit: cover; /* Prevents stretching */
+            border-radius: 8px; /* Smooth corners */
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        /* ANIMATIONS */
+        .scroll-left { animation: scrollLeft 60s linear infinite; }
+        .scroll-right { animation: scrollRight 65s linear infinite; }
+
+        @keyframes scrollLeft {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        @keyframes scrollRight {
+            0% { transform: translateX(-50%); }
+            100% { transform: translateX(0); }
+        }
+
+        /* 2. VIGNETTE OVERLAY (Darkens Edges) */
+        .vignette {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, rgba(0,0,0,0) 20%, rgba(0,0,0,1) 90%);
+            z-index: 2; pointer-events: none;
+        }
+
+        /* 3. THE GLASS CENTER BOX */
+        .glass-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            
+            background: rgba(10, 10, 10, 0.6); /* Darker glass */
+            backdrop-filter: blur(20px) saturate(120%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 70px 100px;
+            text-align: center;
+            border-radius: 30px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.9);
+            width: 60%;
+            max-width: 700px;
+        }
+
+        .brand-title {
+            font-size: 4.5rem;
+            color: white;
+            margin: 0;
+            font-family: 'Playfair Display', serif;
+            letter-spacing: 8px;
+            line-height: 1;
+            background: linear-gradient(to right, #fff, #ccc);
+            -webkit-background-clip: text;
+        }
+
+        .brand-subtitle {
+            font-size: 1rem;
+            color: #C5A059;
+            margin-top: 20px;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 500;
+        }
+
+        .enter-btn {
+            display: inline-block;
+            margin-top: 50px;
+            padding: 18px 50px;
+            background: transparent;
+            color: #C5A059;
+            border: 1px solid #C5A059;
+            font-weight: 600;
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            border-radius: 50px;
+            transition: all 0.4s ease;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.9rem;
+        }
+
+        .enter-btn:hover {
+            background: #C5A059;
+            color: black;
+            box-shadow: 0 0 30px rgba(197, 160, 89, 0.4);
+        }
+
+        /* FOOTER ON HOME PAGE */
+        .site-footer {
+            position: absolute; 
+            bottom: 0; 
+            width: 100%; 
+            z-index: 20;
+            background: transparent;
+            padding: 30px 0;
+            border: none;
+            pointer-events: none; /* Let clicks pass through empty space */
+        }
+        .footer-content { pointer-events: auto; } /* Re-enable clicks on links */
+        .footer-links { display: flex; justify-content: center; gap: 30px; }
+        .footer-link-item { font-size: 0.8rem; color: rgba(255,255,255,0.6); text-decoration: none; text-transform: uppercase; letter-spacing: 2px; transition: 0.3s; }
+        .footer-link-item:hover { color: #C5A059; }
+        .copyright { display: none; }
+
+        /* Mobile Adjustments */
+        @media (max-width: 768px) {
+            .brand-title { font-size: 2.8rem; letter-spacing: 2px; }
+            .glass-overlay { padding: 50px 20px; width: 85%; }
+            .marquee-row img { width: 40vw; } /* Bigger images on mobile */
+            .marquee-row { gap: 10px; }
+            .footer-links { gap: 15px; font-size: 0.7rem; }
+        }
+    </style>
+</head>
+<body>
+    
+    <div id="cursor-dot" class="cursor-dot" style="background: #C5A059; width: 6px; height: 6px; border-radius: 50%; position: fixed; pointer-events: none; z-index: 10000;"></div>
+    <div id="cursor-outline" class="cursor-outline" style="border: 1px solid #C5A059; width: 40px; height: 40px; border-radius: 50%; position: fixed; pointer-events: none; z-index: 9999;"></div>
+
+    <div class="marquee-container">
+        <div class="marquee-row scroll-left" id="row-top"></div>
+        <div class="marquee-row scroll-right" id="row-bottom"></div>
+    </div>
+
+    <div class="vignette"></div>
+
+    <div class="glass-overlay">
+        <h1 class="brand-title">PANUN POSHAK</h1>
+        <p class="brand-subtitle">Heritage Reimagined</p>
+        <a href="shop.html" class="enter-btn">View Collection</a>
+    </div>
+
+    <footer class="site-footer">
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="about.html" class="footer-link-item">About</a>
+                <a href="https://wa.me/919103463033" class="footer-link-item">WhatsApp</a>
+                <a href="https://instagram.com/panu.nposhak" class="footer-link-item">Instagram</a>
+                <a href="mailto:poshakpanun@gmail.com" class="footer-link-item">Email</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    
+    <script src="firebase-config.js"></script>
+
+    <script src="script.js"></script>
+
+    <script>
+        // Note: Cursor animation is now handled by script.js, so I removed it here to prevent bugs.
+
+        // DYNAMIC BACKGROUND LOADER
+        document.addEventListener("DOMContentLoaded", async () => {
+            // Safety check for Firebase
+            if (typeof firebase === 'undefined') {
+                console.error("Firebase not loaded!");
+                return;
+            }
+
+            const db = firebase.firestore();
+            const topRow = document.getElementById('row-top');
+            const bottomRow = document.getElementById('row-bottom');
+            
+            // Fetch images
+            let urls = [];
+            try {
+                const snap = await db.collection("home_banners").orderBy("timestamp", "desc").get();
+                if(!snap.empty) {
+                    urls = snap.docs.map(doc => doc.data().img);
+                } else {
+                    throw new Error("No images found");
+                }
+            } catch (err) {
+                // Fallback Placeholders if no images uploaded or error
+                console.log("Using fallback images");
+                urls = [
+                    'https://images.unsplash.com/photo-1544441893-675973e31985?w=500&q=80',
+                    'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=500&q=80',
+                    'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500&q=80',
+                    'https://images.unsplash.com/photo-1529139574466-a302d2052574?w=500&q=80'
+                ];
+            }
+
+            // Function to fill row with infinite scroll logic
+            const fillRow = (container, imageList) => {
+                let content = imageList;
+                // Duplicate images until we have enough to fill screen
+                while(content.length < 8) {
+                    content = [...content, ...content];
+                }
+                // Double it again for smooth looping
+                const seamlessList = [...content, ...content];
+
+                seamlessList.forEach(url => {
+                    const img = document.createElement('img');
+                    img.src = url;
+                    
+                    // --- LAZY LOADING ADDED HERE ---
+                    img.loading = "lazy";
+                    img.decoding = "async";
+                    // -------------------------------
+
+                    container.appendChild(img);
+                });
+            };
+
+            if(topRow) fillRow(topRow, urls);
+            if(bottomRow) fillRow(bottomRow, [...urls].reverse());
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Heritage | Panun Poshak</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+
+    <style>
+        body { background: #050505; color: white; padding-top: 100px; }
+
+        /* HERO SECTION */
+        .about-hero {
+            text-align: center; padding: 60px 20px;
+            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.9)), url('pherans/banner.jpg') center/cover fixed;
+            min-height: 300px; display: flex; flex-direction: column; justify-content: center;
+        }
+        .hero-title { font-family: 'Playfair Display', serif; font-size: 3rem; color: #C5A059; margin-bottom: 10px; }
+        .hero-sub { color: #ccc; letter-spacing: 2px; text-transform: uppercase; font-size: 0.9rem; }
+
+        /* STORY SECTION */
+        .story-container { max-width: 900px; margin: 0 auto; padding: 60px 20px; text-align: center; }
+        .story-text { font-size: 1.1rem; line-height: 1.8; color: #aaa; margin-bottom: 30px; }
+        .highlight { color: #C5A059; font-weight: bold; }
+
+        /* VALUES GRID */
+        .values-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; max-width: 1100px; margin: 0 auto 60px auto; padding: 0 20px; }
+        .value-card { background: #111; padding: 30px; border: 1px solid #333; border-radius: 10px; text-align: center; transition: 0.3s; }
+        .value-card:hover { border-color: #C5A059; transform: translateY(-5px); }
+        .v-icon { font-size: 2rem; margin-bottom: 15px; display: block; }
+        .v-title { color: white; margin-bottom: 10px; font-family: 'Playfair Display', serif; }
+        .v-desc { color: #666; font-size: 0.9rem; }
+
+        /* CONTACT FORM */
+        .contact-section { background: #111; padding: 60px 20px; text-align: center; border-top: 1px solid #333; }
+        .contact-form { max-width: 500px; margin: 30px auto; text-align: left; }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; color: #888; margin-bottom: 5px; font-size: 0.8rem; }
+        .input-group input, .input-group textarea { width: 100%; background: #222; border: 1px solid #333; padding: 12px; color: white; border-radius: 5px; }
+        .input-group input:focus, .input-group textarea:focus { border-color: #C5A059; outline: none; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-top">
+            <a href="index.html" class="logo">PANUN POSHAK</a>
+            <div class="search-box">
+                <input type="text" id="global-search" placeholder="Search...">
+                <button onclick="runSearch()">🔍</button>
+            </div>
+            <div style="display:flex; gap:15px; align-items:center;">
+                <a href="tracker.html" style="color:#C5A059; text-decoration:none; font-size:0.8rem;">TRACK ORDER</a>
+                <div class="cart-icon" onclick="window.location.href='shop.html'">🛒</div>
+            </div>
+        </div>
+        <nav class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="shop.html">Shop All</a>
+            <a href="shop.html?q=pheran">Pherans</a>
+            <a href="shop.html?q=shawl">Shawls</a>
+            <a href="shop.html?q=bags">Bags</a>
+            <a href="about.html" style="color:#C5A059;">About Us</a>
+        </nav>
+    </header>
+
+    <div class="about-hero">
+        <h1 class="hero-title">The Art of Heritage</h1>
+        <p class="hero-sub">Bringing Kashmir to the World</p>
+    </div>
+
+    <div class="story-container">
+        <h2 style="color:white; margin-bottom:30px; font-family:'Playfair Display', serif;">Our Story</h2>
+        <p class="story-text">
+            Born in the heart of <span class="highlight">Srinagar</span>, Panun Poshak is not just a brand; it is a tribute to centuries of Kashmiri craftsmanship. We believe that true luxury lies in the details—the intricate needlework of a Pheran, the warmth of pure Pashmina, and the story woven into every thread.
+        </p>
+        <p class="story-text">
+            Our mission is simple: To preserve our culture while embracing the modern world. Every piece you buy supports local artisans and keeps the legacy of <span class="highlight">Kashmiriyat</span> alive.
+        </p>
+    </div>
+
+    <div class="values-grid">
+        <div class="value-card">
+            <span class="v-icon">🧵</span>
+            <h3 class="v-title">Handcrafted</h3>
+            <p class="v-desc">Every item is made by skilled artisans, ensuring authentic quality.</p>
+        </div>
+        <div class="value-card">
+            <span class="v-icon">✨</span>
+            <h3 class="v-title">Premium Quality</h3>
+            <p class="v-desc">We use only the finest fabrics, velvet, and wool.</p>
+        </div>
+        <div class="value-card">
+            <span class="v-icon">🚚</span>
+            <h3 class="v-title">Global Shipping</h3>
+            <p class="v-desc">Delivering a piece of Kashmir to your doorstep, anywhere.</p>
+        </div>
+    </div>
+
+    <div class="contact-section">
+        <h2 style="color:white; font-family:'Playfair Display', serif;">Contact Concierge</h2>
+        <p style="color:#888; margin-bottom:30px;">Have a question? We are here to help.</p>
+
+        <div class="contact-form">
+            <div class="input-group">
+                <label>Your Name</label>
+                <input type="text" id="c-name" placeholder="John Doe">
+            </div>
+            <div class="input-group">
+                <label>Email Address</label>
+                <input type="email" id="c-email" placeholder="john@example.com">
+            </div>
+            <div class="input-group">
+                <label>Message</label>
+                <textarea id="c-msg" rows="5" placeholder="How can we help you?"></textarea>
+            </div>
+            <button onclick="sendContactEmail()" class="track-btn" style="width:100%; background:#C5A059; color:black; font-weight:bold; padding:12px; border:none; border-radius:5px; cursor:pointer;">SEND MESSAGE</button>
+        </div>
+        
+        <div style="margin-top:40px;">
+            <p style="color:#666;">Or reach us directly:</p>
+            <a href="https://wa.me/919103463033" style="color:#C5A059; text-decoration:none; font-weight:bold; font-size:1.1rem;">WhatsApp: +91 91034 63033</a>
+        </div>
+    </div>
+
+    <footer class="site-footer">
+        <div class="footer-content">
+            <div class="footer-brand">PANUN POSHAK</div>
+            <div class="footer-links">
+                <a href="index.html" class="footer-link-item"><span>🏠 Home</span></a>
+                <a href="shop.html" class="footer-link-item"><span>🛍️ Shop</span></a>
+                <a href="https://wa.me/919103463033" class="footer-link-item"><span>💬 WhatsApp</span></a>
+            </div>
+            <div class="footer-divider"></div>
+            <p class="copyright">© 2025 Panun Poshak. Heritage Reimagined.<br>Srinagar, Kashmir</p>
+        </div>
+    </footer>
+
+    <script>
+        emailjs.init("qbEQxXghYo0YN6NDM"); 
+
+        function runSearch() {
+            const query = document.getElementById('global-search').value;
+            if(query) window.location.href = `shop.html?q=${encodeURIComponent(query)}`;
+        }
+
+        function sendContactEmail() {
+            const name = document.getElementById("c-name").value;
+            const email = document.getElementById("c-email").value;
+            const msg = document.getElementById("c-msg").value;
+
+            if(!name || !email || !msg) return alert("Please fill all fields.");
+
+            // Simple email send (using your existing service ID)
+            emailjs.send("service_pv7wuwx", "template_ivpwg6a", {
+                user_name: name,
+                user_email: email,
+                order_items: "Contact Form Message", // Reusing template variable
+                payment_info: msg,                   // Reusing template variable for message
+                order_total: "N/A",
+                order_id: "INQUIRY",
+                address: "N/A",
+                phone: "N/A"
+            }).then(() => {
+                alert("Message Sent! We will contact you shortly.");
+                document.getElementById("c-msg").value = "";
+            });
+        }
+    </script>
+</body>
+</html>

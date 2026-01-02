@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Admin Login | Panun Poshak</title>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="firebase-config.js"></script>
+
+<style>
+body {
+  background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.9)), 
+              url('pherans/banner.jpg') center/cover fixed;
+  font-family: 'Helvetica Neue', sans-serif;
+  color: white; display: flex;
+  justify-content: center; align-items: center;
+  height: 100vh; margin: 0;
+}
+.login-box {
+  background: #111; padding: 50px;
+  border-radius: 15px; text-align: center;
+  border: 1px solid #C5A059;
+  box-shadow: 0 0 30px rgba(197, 160, 89, 0.2);
+  max-width: 400px; width: 90%;
+}
+h2 { color: #C5A059; text-transform: uppercase; letter-spacing: 2px; margin-top: 0; }
+p { color: #888; margin-bottom: 30px; }
+
+button {
+  background: #C5A059; border: none; padding: 15px 30px;
+  font-weight: bold; cursor: pointer; border-radius: 50px;
+  font-size: 1rem; color: black; transition: 0.3s;
+  width: 100%;
+}
+button:hover { background: white; transform: scale(1.05); }
+</style>
+
+</head>
+<body>
+
+<div class="login-box">
+  <h2>Admin Login</h2>
+  <p>Secure Access Area</p>
+  <button onclick="googleLogin()">Login With Google</button>
+  <p id="error-msg" style="color:#ff4d4d; display:none; margin-top:15px; font-size:0.9rem;"></p>
+</div>
+
+<script>
+// Safety check for Firebase
+if (typeof firebase === 'undefined' || !firebase.apps.length) {
+    alert("Firebase not loaded! Check internet.");
+}
+
+function googleLogin(){
+  const provider = new firebase.auth.GoogleAuthProvider();
+  
+  firebase.auth().signInWithPopup(provider).then((result) => {
+    const email = result.user.email;
+    
+    // CHECK: Only allow the business email
+    if(email !== "poshakpanun@gmail.com") {
+        // FAIL
+        document.getElementById("error-msg").innerText = "❌ Access Denied: " + email + " is not an admin.";
+        document.getElementById("error-msg").style.display = "block";
+        firebase.auth().signOut();
+    } else {
+        // SUCCESS
+        window.location.href = "admin.html"; 
+    }
+  }).catch((error) => {
+    console.error(error);
+    alert("Login Error: " + error.message);
+  });
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Track Order | Panun Poshak</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        /* --- 1. LAYOUT FIX (CRITICAL) --- */
+        html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            
+            /* FIXED: Use min-height so content can grow if needed */
+            min-height: 100vh !important; 
+            height: auto !important; 
+            
+            /* FIXED: Allow scrolling if screen is too small */
+            overflow-x: hidden !important; 
+            overflow-y: auto !important;
+            
+            /* Flex Column to organize Header -> Content -> Footer */
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: space-between !important; 
+
+            /* Background */
+            background: url('banner.jpg') no-repeat center center fixed !important;
+            background-size: cover !important;
+            background-color: #050505 !important;
+        }
+
+        /* --- 2. HEADER --- */
+        header {
+            width: 100%;
+            padding: 25px 60px;
+            display: flex !important; 
+            justify-content: space-between !important; 
+            align-items: center !important;
+            background: transparent !important;
+            z-index: 100;
+            box-sizing: border-box;
+            
+            /* Stop Header from shrinking */
+            flex-shrink: 0 !important; 
+            position: relative !important;
+        }
+
+        .track-logo { 
+            font-family: 'Playfair Display', serif; 
+            font-size: 1.8rem; 
+            color: #C5A059; 
+            letter-spacing: 3px; 
+            text-decoration: none; 
+            font-weight: bold;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+        }
+
+        .track-back-btn { 
+            color: white; 
+            font-size: 0.8rem; 
+            letter-spacing: 2px; 
+            text-decoration: none;
+            text-transform: uppercase;
+            font-weight: bold;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 10px 25px;
+            border-radius: 50px;
+            background: rgba(0,0,0,0.4);
+            transition: 0.3s;
+        }
+        .track-back-btn:hover { background: #C5A059; color: black !important; border-color: #C5A059; }
+
+        /* --- 3. DARK OVERLAY --- */
+        .page-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.65); 
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* --- 4. TRACKER WRAPPER (The Centerpiece) --- */
+        .tracker-wrapper {
+            position: relative; 
+            z-index: 10; 
+            
+            /* FIXED: flex-grow: 1 pushes footer down, margin gives space */
+            flex: 1 0 auto !important; 
+            display: flex !important;
+            align-items: center !important;     
+            justify-content: center !important; 
+            
+            width: 100%;
+            padding: 40px 20px; /* Add breathing room top/bottom */
+            box-sizing: border-box;
+            animation: popUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        @keyframes popUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+
+        .glass-card {
+            background: rgba(15, 15, 15, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(197, 160, 89, 0.2);
+            padding: 50px 40px;
+            border-radius: 20px;
+            box-shadow: 0 40px 100px rgba(0,0,0,0.8);
+            text-align: center;
+            width: 100%;
+            max-width: 500px;
+            
+            /* Ensure card doesn't touch edges */
+            margin: 20px auto; 
+        }
+
+        h2 { color: #C5A059; font-family: 'Playfair Display', serif; font-size: 2.2rem; margin: 0 0 10px 0; letter-spacing: 1px; }
+        .subtitle { color: #aaa; margin-bottom: 35px; font-size: 0.9rem; letter-spacing: 1px; }
+
+        .track-input {
+            width: 100%; padding: 16px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white; font-size: 1.1rem; text-align: center;
+            border-radius: 10px; letter-spacing: 4px; text-transform: uppercase;
+            font-weight: 600; outline: none; transition: 0.3s;
+            margin-bottom: 0; box-sizing: border-box;
+        }
+        .track-input:focus { border-color: #C5A059; box-shadow: 0 0 20px rgba(197, 160, 89, 0.1); }
+
+        .track-btn {
+            margin-top: 20px; padding: 16px 0;
+            background: linear-gradient(135deg, #C5A059 0%, #9e7f43 100%);
+            color: black; font-weight: bold; border: none; border-radius: 50px;
+            cursor: pointer; letter-spacing: 2px; width: 100%; font-size: 0.85rem;
+            text-transform: uppercase; box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            transition: 0.3s;
+        }
+        .track-btn:hover { transform: translateY(-2px); box-shadow: 0 15px 40px rgba(197, 160, 89, 0.3); }
+
+        #result-area { margin-top: 40px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 30px; display: none; }
+        .order-details { text-align: left; background: rgba(0,0,0,0.3); padding: 20px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); }
+        .detail-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed rgba(255,255,255,0.1); font-size: 0.9rem; color: #ddd; }
+        .detail-row span:last-child { color: white; font-weight: bold; }
+
+        /* Progress Bar */
+        .progress-container { display: flex; justify-content: space-between; margin: 40px 0; position: relative; }
+        .progress-bg { position: absolute; top: 14px; left: 0; width: 100%; height: 2px; background: #333; z-index: 0; }
+        .progress-fill { position: absolute; top: 14px; left: 0; height: 2px; background: #C5A059; z-index: 1; width: 0%; transition: width 1s ease; }
+        .step-wrapper { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; width: 25%; }
+        .step-dot { width: 30px; height: 30px; background: #000; border: 2px solid #444; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: #444; }
+        .step-label { margin-top: 10px; font-size: 0.65rem; color: #555; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; }
+        .step-wrapper.active .step-dot { background: #C5A059; border-color: #C5A059; color: black; }
+        .step-wrapper.active .step-label { color: #C5A059; }
+
+        /* --- 5. FOOTER --- */
+        .site-footer {
+            /* Stop Footer from shrinking/overlapping */
+            flex-shrink: 0 !important; 
+            
+            background: #050505 !important;
+            border-top: 1px solid rgba(197, 160, 89, 0.2) !important;
+            padding: 40px 20px !important;
+            width: 100% !important;
+            position: relative !important;
+            z-index: 10;
+            box-sizing: border-box;
+            
+            /* Pushes footer to very bottom */
+            margin-top: auto !important; 
+        }
+
+        /* --- 6. MOBILE FIXES --- */
+        @media(max-width: 768px) {
+            header { padding: 20px 25px !important; position: absolute !important; top: 0 !important; }
+            .track-logo { font-size: 1.4rem; }
+            .track-back-btn { padding: 8px 15px; font-size: 0.7rem; }
+            
+            .tracker-wrapper { 
+                padding-top: 100px !important; 
+                display: block !important; 
+                margin: 0 auto !important;
+                margin-bottom: 30px !important;
+            }
+            .glass-card { margin: 0 auto; width: 90%; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="cursor-dot" class="cursor-dot" style="background: #C5A059; width: 6px; height: 6px; border-radius: 50%; position: fixed; pointer-events: none; z-index: 9999;"></div>
+    <div id="cursor-outline" class="cursor-outline" style="border: 1px solid #C5A059; width: 40px; height: 40px; border-radius: 50%; position: fixed; pointer-events: none; z-index: 9999;"></div>
+
+    <div class="page-overlay"></div>
+
+    <header>
+        <a href="index.html" class="track-logo">PANUN POSHAK</a>
+        <a href="shop.html" class="track-back-btn">Back to Shop</a>
+    </header>
+
+    <div class="tracker-wrapper">
+        <div class="glass-card">
+            <h2>Track Your Order</h2>
+            <p class="subtitle">Enter the Tracking ID sent to your WhatsApp</p>
+            
+            <div id="input-area">
+                <input type="text" id="order-id-input" class="track-input" placeholder="#A1B2C3">
+                <button onclick="manualTrack()" class="track-btn">TRACK NOW</button>
+            </div>
+
+            <div id="loader" style="display:none; color:#C5A059; margin-top:20px; font-weight:bold; letter-spacing:1px;">SEARCHING...</div>
+            <div id="error-msg" style="color:#ff4d4d; margin-top:20px; display:none; font-weight:bold;"></div>
+
+            <div id="result-area">
+                <h3 id="status-text" style="color: #C5A059; font-family: 'Playfair Display', serif; font-size: 1.8rem; margin: 0;">Processing</h3>
+                
+                <div class="progress-container">
+                    <div class="progress-bg"></div>
+                    <div class="progress-fill" id="progress-line"></div>
+                    
+                    <div class="step-wrapper" id="step-placed">
+                        <div class="step-dot">1</div>
+                        <div class="step-label">Placed</div>
+                    </div>
+                    <div class="step-wrapper" id="step-confirmed">
+                        <div class="step-dot">2</div>
+                        <div class="step-label">Confirm</div>
+                    </div>
+                    <div class="step-wrapper" id="step-shipped">
+                        <div class="step-dot">3</div>
+                        <div class="step-label">Shipped</div>
+                    </div>
+                    <div class="step-wrapper" id="step-delivered">
+                        <div class="step-dot">4</div>
+                        <div class="step-label">Delivered</div>
+                    </div>
+                </div>
+
+                <div class="order-details" id="details-box">
+                    <div class="detail-row"><span>Order ID</span><span id="d-id">...</span></div>
+                    <div class="detail-row"><span>Customer</span><span id="d-name">...</span></div>
+                    <div class="detail-row"><span>Items</span><span id="d-items">...</span></div>
+                    <div class="detail-row"><span>Total Amount</span><span id="d-total" style="color: #C5A059;">...</span></div>
+                </div>
+                
+                <a id="courier-btn" href="#" target="_blank" class="track-btn" style="display:none; margin-top:20px; background:rgba(255,255,255,0.1); color:white; border:1px solid rgba(255,255,255,0.2);">
+                    📍 View Live Location
+                </a>
+
+                <button onclick="window.location.reload()" style="margin-top:25px; background:transparent; border:none; color:#666; cursor:pointer; text-decoration:underline; font-size:0.8rem;">
+                    Check Another Order
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="site-footer">
+        <div class="footer-content">
+            <div class="footer-brand">PANUN POSHAK</div>
+            
+            <div class="footer-links">
+                <a href="about.html" class="footer-link-item">Our Story</a>
+                <a href="https://wa.me/919103463033" target="_blank" class="footer-link-item">WhatsApp</a>
+                <a href="https://instagram.com/panu.nposhak" target="_blank" class="footer-link-item">Instagram</a>
+                <a href="mailto:poshakpanun@gmail.com" class="footer-link-item">Email Support</a>
+            </div>
+
+            <div class="footer-divider"></div>
+            
+            <p class="copyright">
+                © 2026 Panun Poshak. Heritage Reimagined.<br>
+                Made with ❤️ in Srinagar, Kashmir.
+            </p>
+        </div>
+    </footer>
+
+    <script src="firebase-config.js"></script>
+    <script>
+        const db = firebase.firestore();
+
+        // 1. CURSOR ANIMATION
+        const cursorDot = document.getElementById("cursor-dot");
+        const cursorOutline = document.getElementById("cursor-outline");
+        if(cursorDot && cursorOutline) {
+            window.addEventListener("mousemove", (e) => {
+                cursorDot.style.left = `${e.clientX}px`; cursorDot.style.top = `${e.clientY}px`;
+                cursorOutline.animate({ left: `${e.clientX}px`, top: `${e.clientY}px` }, { duration: 500, fill: "forwards" });
+            });
+        }
+
+        // 2. AUTO-LOAD FROM URL
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlId = urlParams.get('id');
+            if(urlId) {
+                document.getElementById('order-id-input').value = urlId;
+                manualTrack();
+            }
+        });
+
+        // 3. DUAL SEARCH TRACKING
+        async function manualTrack() {
+            const rawId = document.getElementById('order-id-input').value.trim();
+            if(!rawId) return alert("Please enter your Order ID");
+            
+            // Normalize ID format
+            let searchId = rawId.toUpperCase();
+            if(!searchId.startsWith("#")) searchId = "#" + searchId; 
+            const docIdSearch = rawId.replace("#", "").trim(); 
+
+            // UI State
+            document.getElementById('input-area').style.display = 'none';
+            document.getElementById('loader').style.display = 'block';
+            document.getElementById('error-msg').style.display = 'none';
+
+            try {
+                let orderData = null;
+                let finalIdDisplay = "";
+
+                // Attempt 1: Short ID
+                const q = await db.collection("orders").where("trackingId", "==", searchId).get();
+                if (!q.empty) {
+                    orderData = q.docs[0].data();
+                    finalIdDisplay = orderData.trackingId;
+                } else {
+                    // Attempt 2: Doc ID
+                    const docSnap = await db.collection("orders").doc(docIdSearch).get();
+                    if(docSnap.exists) {
+                        orderData = docSnap.data();
+                        finalIdDisplay = "#" + docSnap.id.substring(0,8).toUpperCase();
+                    }
+                }
+
+                document.getElementById('loader').style.display = 'none';
+
+                if (orderData) {
+                    showResult(orderData, finalIdDisplay);
+                } else {
+                    showError();
+                }
+
+            } catch (err) {
+                console.error(err);
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('error-msg').innerText = "Network Error. Please try again.";
+                document.getElementById('error-msg').style.display = 'block';
+                document.getElementById('input-area').style.display = 'block';
+            }
+        }
+
+        function showResult(o, id) {
+            document.getElementById('result-area').style.display = 'block';
+            document.getElementById('status-text').innerText = o.status || "Processing";
+            document.getElementById('d-id').innerText = id;
+            document.getElementById('d-name').innerText = o.customer.name;
+            document.getElementById('d-items').innerText = o.product.length > 25 ? o.product.substring(0,25)+"..." : o.product;
+            document.getElementById('d-total').innerText = "₹" + o.price;
+            updateProgressBar(o.status);
+
+            const courierBtn = document.getElementById('courier-btn');
+            if(o.trackingUrl) {
+                courierBtn.href = o.trackingUrl;
+                courierBtn.style.display = "inline-block";
+            }
+        }
+
+        function showError() {
+            document.getElementById('input-area').style.display = 'block';
+            const err = document.getElementById('error-msg');
+            err.innerText = "Order not found. Check your ID.";
+            err.style.display = 'block';
+        }
+
+        function updateProgressBar(status) {
+            const steps = {
+                'placed': document.getElementById('step-placed'),
+                'confirmed': document.getElementById('step-confirmed'),
+                'shipped': document.getElementById('step-shipped'),
+                'delivered': document.getElementById('step-delivered')
+            };
+            const line = document.getElementById('progress-line');
+            const s = status ? status.toLowerCase().trim() : '';
+
+            Object.values(steps).forEach(el => el.classList.remove('active'));
+            line.style.width = "0%";
+
+            if (s.includes('placed') || s.includes('processing') || s.includes('pending')) {
+                steps.placed.classList.add('active');
+                line.style.width = "12%";
+            }
+            if (s.includes('confirmed') || s.includes('packed')) {
+                steps.placed.classList.add('active');
+                steps.confirmed.classList.add('active');
+                line.style.width = "37%";
+            }
+            if (s.includes('shipped') || s.includes('dispatched')) {
+                steps.placed.classList.add('active');
+                steps.confirmed.classList.add('active');
+                steps.shipped.classList.add('active');
+                line.style.width = "62%";
+            }
+            if (s.includes('delivered') || s.includes('complete')) {
+                steps.placed.classList.add('active');
+                steps.confirmed.classList.add('active');
+                steps.shipped.classList.add('active');
+                steps.delivered.classList.add('active');
+                line.style.width = "100%";
+                document.getElementById('status-text').innerText = "Delivered ✓";
+                document.getElementById('status-text').style.color = "#25D366";
+            }
+        }
+    </script>
+</body>
+</html>

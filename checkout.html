@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Checkout | Panun Poshak</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        /* --- CRITICAL LAYOUT FIXES FOR CHECKOUT --- */
+        /* We use !important to override the global style.css locks */
+        html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            
+            /* ALLOW SCROLLING (Fixes the "fucked" layout) */
+            height: auto !important; 
+            min-height: 100vh !important;
+            overflow-y: auto !important; 
+            overflow-x: hidden !important;
+            
+            /* Disable Global Flex Centering */
+            display: flex !important;
+            flex-direction: column !important;
+            
+            /* Background */
+            background: url('banner.jpg') no-repeat center center fixed !important;
+            background-size: cover !important;
+            background-color: #050505 !important;
+        }
+
+        body {
+            /* Push content down below header */
+            padding-top: 140px !important; 
+            align-items: center !important;
+        }
+
+        /* Header Override */
+        header {
+            position: absolute !important;
+            top: 0 !important;
+            width: 100% !important;
+        }
+
+        .checkout-container { 
+            display: grid; 
+            grid-template-columns: 1.2fr 0.8fr; 
+            gap: 30px; 
+            max-width: 1200px; 
+            width: 95%; 
+            margin: 0 auto 50px auto; /* Margin bottom for footer space */
+            position: relative;
+            z-index: 10;
+            flex: 1 0 auto !important; /* Pushes footer down */
+        }
+
+        /* Mobile Layout */
+        @media (max-width: 900px) { 
+            .checkout-container { 
+                grid-template-columns: 1fr; 
+            } 
+            .order-summary-box { 
+                grid-row: 1; /* Order Summary on top for mobile */
+            } 
+            body {
+                padding-top: 120px !important;
+            }
+        }
+        
+        .chk-item-row { display: flex; gap: 15px; margin-bottom: 20px; align-items: center; border-bottom: 1px solid #222; padding-bottom: 15px; }
+        .chk-img { width: 60px; height: 60px; object-fit: cover; border-radius: 5px; border: 1px solid #333; }
+        .chk-details { flex: 1; }
+        .chk-title { font-size: 0.9rem; color: white; margin-bottom: 5px; }
+        .chk-price { font-size: 0.85rem; color: #888; }
+        
+        .chk-actions { display: flex; align-items: center; gap: 10px; margin-top: 5px; }
+        .qty-box { display: flex; align-items: center; border: 1px solid #444; border-radius: 4px; background: #000; }
+        .qty-box button { width: 25px; height: 25px; background: #222; color: white; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .qty-box button:hover { background: #C5A059; color: black; }
+        .qty-box span { padding: 0 10px; font-size: 0.8rem; color: white; }
+        
+        .del-btn { background: none; border: none; cursor: pointer; font-size: 1rem; color: #ff4d4d; }
+        .del-btn:hover { transform: scale(1.1); }
+
+        .success-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 5000; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
+        .success-box { background: #111; border: 1px solid #C5A059; padding: 40px; border-radius: 20px; text-align: center; max-width: 400px; width: 90%; animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        
+        /* Summary & Coupon Styles */
+        .summary-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 0.9rem; color: #aaa; }
+        .summary-total { display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: bold; color: white; margin-top: 15px; padding-top: 15px; border-top: 1px dashed #333; }
+        
+        .coupon-section { display: flex; gap: 10px; margin-bottom: 20px; margin-top: 10px; }
+        .coupon-input { flex: 1; background: #000; border: 1px solid #333; color: white; padding: 10px; border-radius: 5px; text-transform: uppercase; }
+        .coupon-btn { background: #C5A059; color: black; border: none; padding: 0 20px; font-weight: bold; cursor: pointer; border-radius: 5px; }
+        .coupon-msg { font-size: 0.8rem; margin-bottom: 15px; display: none; }
+
+        /* Footer Fix for Checkout */
+        .site-footer {
+            margin-top: auto !important; 
+            width: 100%;
+            position: relative;
+            z-index: 10;
+            flex-shrink: 0 !important;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="cursor-dot" class="cursor-dot"></div>
+    <div id="cursor-outline" class="cursor-outline"></div>
+
+    <header>
+        <div class="header-top">
+            <a href="index.html" class="logo">PANUN POSHAK</a>
+            <div style="display:flex; gap:20px; align-items:center;">
+                <a href="shop.html" style="color:#C5A059; text-decoration:none; font-size:0.8rem;">BACK TO SHOP</a>
+            </div>
+        </div>
+    </header>
+
+    <div class="checkout-container">
+        
+        <div class="glass-form" style="margin: 0;">
+            <h2 style="color:#C5A059; font-family:'Playfair Display', serif; margin-bottom:20px;">Shipping Details</h2>
+            
+            <input type="text" id="c-name" placeholder="Full Name">
+            <input type="tel" id="c-phone" placeholder="Phone Number (10 Digits)" maxlength="10">
+            
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <input type="text" id="c-flat" placeholder="Flat, House no., Building">
+                <input type="text" id="c-area" placeholder="Area, Street, Village">
+            </div>
+            
+            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
+                <input type="text" id="c-pincode" placeholder="Pincode" oninput="calculateTotal()" maxlength="6">
+                <input type="text" id="c-city" placeholder="City">
+                <input type="text" id="c-state" placeholder="State">
+            </div>
+
+            <h3 style="margin-top:30px; color:white;">Payment Method</h3>
+            <div class="payment-options">
+                <label class="pay-card">
+                    <input type="radio" name="payment" value="cod" checked onchange="calculateTotal()">
+                    <div class="pay-content">🚚 Cash on Delivery</div>
+                </label>
+                <label class="pay-card">
+                    <input type="radio" name="payment" value="online" onchange="calculateTotal()">
+                    <div class="pay-content">💳 Pay via UPI / Card <span style="font-size:0.7rem; color:#25D366; display:block;">(Free Shipping)</span></div>
+                </label>
+            </div>
+
+            <button onclick="initiateOrder()" class="confirm-btn">PROCEED TO PAY</button>
+        </div>
+
+        <div class="checkout-box order-summary-box" style="margin: 0; height: fit-content;">
+            <h3 style="color:#C5A059; font-family:'Playfair Display', serif; margin-bottom:20px;">Your Order</h3>
+            <div id="order-items" style="max-height: 400px; overflow-y: auto; margin-bottom: 20px;">
+                <p style="color:#666;">Loading items...</p>
+            </div>
+            
+            <div class="coupon-section">
+                <input type="text" id="coupon-code" class="coupon-input" placeholder="COUPON CODE">
+                <button onclick="applyCoupon()" class="coupon-btn">APPLY</button>
+            </div>
+            <div id="coupon-msg" class="coupon-msg"></div>
+            
+            <div style="border-top:1px solid #333; padding-top:15px;">
+                <div class="summary-row">
+                    <span>Subtotal</span>
+                    <span id="subtotal-display">₹0</span>
+                </div>
+                <div class="summary-row" id="discount-row" style="display:none; color:#C5A059;">
+                    <span>Discount</span>
+                    <span id="discount-display">-₹0</span>
+                </div>
+                <div class="summary-row">
+                    <span>Shipping</span>
+                    <span id="shipping-cost">Calculated below</span>
+                </div>
+                <div class="summary-total">
+                    <span>Total</span>
+                    <span id="order-total" style="color:#C5A059;">₹0</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="success-overlay" class="success-overlay">
+        <div class="success-box">
+            <div class="success-icon-container">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            </div>
+            
+            <h2 class="success-title">Order Confirmed!</h2>
+            
+            <p style="color:#aaa; font-size: 0.95rem; margin-bottom: 5px;">Your order has been placed successfully.</p>
+            
+            <div class="order-id-badge">
+                <span style="color:#888; font-size:0.8rem; display:block; margin-bottom:3px;">ORDER ID</span>
+                <div id="final-order-id" class="order-id-text">#LOADING...</div>
+            </div>
+            
+            <p style="color:#888; font-size:0.9rem; line-height: 1.5;">We've sent the details to your WhatsApp. Thank you for choosing Panun Poshak.</p>
+            
+            <a id="wa-link" href="#" target="_blank" class="btn-gold-gradient">
+                💬 Send Receipt to Shop
+            </a>
+            <button onclick="window.location.href='shop.html'" class="btn-glass-outline">
+                Continue Shopping
+            </button>
+        </div>
+    </div>
+    
+    <footer class="site-footer">
+        <div class="footer-content">
+            <div class="footer-brand">PANUN POSHAK</div>
+            <div class="footer-links">
+                <a href="about.html" class="footer-link-item">Our Story</a>
+                <a href="https://wa.me/919103463033" target="_blank" class="footer-link-item">WhatsApp</a>
+                <a href="https://instagram.com/panu.nposhak" target="_blank" class="footer-link-item">Instagram</a>
+                <a href="mailto:poshakpanun@gmail.com" class="footer-link-item">Email Support</a>
+            </div>
+            <div class="footer-divider"></div>
+            <p class="copyright">
+                © 2026 Panun Poshak. Heritage Reimagined.<br>
+                Made with ❤️ in Srinagar, Kashmir.
+            </p>
+        </div>
+    </footer>
+   
+
+    <script src="firebase-config.js"></script>
+    <script>
+        if (typeof firebase === 'undefined' || !firebase.apps.length) { console.error("Firebase not loaded!"); }
+        const db = firebase.firestore();
+        let currentCheckoutItems = []; 
+        let currentSubtotal = 0; 
+        let discountPercent = 0;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            // Check for pre-applied coupon from Shop page
+            const savedDiscount = localStorage.getItem("cart_discount_percent");
+            if(savedDiscount) {
+                discountPercent = Number(savedDiscount);
+                if(discountPercent > 0) {
+                    document.getElementById("coupon-code").value = "PANUN10"; // Assume default code
+                    showCouponMessage(true, "✓ Discount Applied from Bag!");
+                }
+            }
+            
+            initCheckout();
+            const cursorDot = document.getElementById("cursor-dot");
+            const cursorOutline = document.getElementById("cursor-outline");
+            if(cursorDot && cursorOutline){
+                window.addEventListener("mousemove", (e) => {
+                    cursorDot.style.left = `${e.clientX}px`;
+                    cursorDot.style.top = `${e.clientY}px`;
+                    cursorOutline.animate({ left: `${e.clientX}px`, top: `${e.clientY}px` }, { duration: 500, fill: "forwards" });
+                });
+            }
+        });
+
+        async function initCheckout() {
+            const container = document.getElementById("order-items");
+            container.innerHTML = "<p style='color:#888;'>Loading...</p>";
+            const type = localStorage.getItem("checkout_type");
+            let rawIds = [];
+
+            if (type === "single") {
+                const id = localStorage.getItem("buy_now_id");
+                if(id) rawIds = [id];
+            } else {
+                rawIds = JSON.parse(localStorage.getItem("cart")) || [];
+            }
+
+            if(rawIds.length === 0) {
+                container.innerHTML = "<p>Cart is empty. <a href='shop.html' style='color:#C5A059'>Go Shop</a></p>";
+                currentSubtotal = 0;
+                calculateTotal(); 
+                return;
+            }
+
+            const counts = {};
+            rawIds.forEach(id => counts[id] = (counts[id] || 0) + 1);
+            currentCheckoutItems = [];
+            const uniqueIds = Object.keys(counts);
+            
+            for (const id of uniqueIds) {
+                try {
+                    const doc = await db.collection("products").doc(id).get();
+                    if(doc.exists) {
+                        const p = doc.data();
+                        currentCheckoutItems.push({
+                            id: id,
+                            name: p.name,
+                            price: Number(p.price),
+                            qty: counts[id],
+                            img: p.img || (p.images ? p.images[0] : '')
+                        });
+                    }
+                } catch (e) { console.error("Error loading product", id); }
+            }
+            renderCheckoutList();
+        }
+
+        function renderCheckoutList() {
+            const container = document.getElementById("order-items");
+            container.innerHTML = "";
+            let grandTotal = 0;
+
+            if(currentCheckoutItems.length === 0) {
+                container.innerHTML = "<p>Cart is empty.</p>";
+                currentSubtotal = 0;
+                calculateTotal();
+                return;
+            }
+
+            currentCheckoutItems.forEach(item => {
+                const lineTotal = item.price * item.qty;
+                grandTotal += lineTotal;
+                container.innerHTML += `
+                    <div class="chk-item-row">
+                        <img src="${item.img}" class="chk-img" onerror="this.src='https://via.placeholder.com/60'">
+                        <div class="chk-details">
+                            <div class="chk-title">${item.name}</div>
+                            <div class="chk-price">₹${item.price.toLocaleString()}</div>
+                            <div class="chk-actions">
+                                <div class="qty-box">
+                                    <button onclick="changeQty('${item.id}', -1)">-</button>
+                                    <span>${item.qty}</span>
+                                    <button onclick="changeQty('${item.id}', 1)">+</button>
+                                </div>
+                                <button class="del-btn" onclick="removeItem('${item.id}')">🗑️</button>
+                            </div>
+                        </div>
+                        <div style="color:#C5A059; font-weight:bold;">₹${lineTotal.toLocaleString()}</div>
+                    </div>
+                `;
+            });
+            
+            currentSubtotal = grandTotal;
+            document.getElementById("subtotal-display").innerText = "₹" + currentSubtotal.toLocaleString();
+            calculateTotal();
+        }
+
+        function applyCoupon() {
+            const code = document.getElementById("coupon-code").value.trim().toUpperCase();
+            
+            if(code === "PANUN10") {
+                discountPercent = 10;
+                showCouponMessage(true, "✓ 10% Discount Applied!");
+            } else {
+                discountPercent = 0;
+                showCouponMessage(false, "Invalid Coupon Code");
+            }
+            calculateTotal();
+        }
+
+        function showCouponMessage(success, text) {
+            const msg = document.getElementById("coupon-msg");
+            msg.style.display = "block";
+            msg.innerText = text;
+            msg.style.color = success ? "#25D366" : "#ff4d4d";
+        }
+
+        function calculateTotal() {
+            // 1. Get Inputs
+            const pincode = document.getElementById("c-pincode").value.trim();
+            const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
+            let shippingCost = 0;
+
+            // 2. Calculate Discount Amount
+            let discountAmount = 0;
+            if(discountPercent > 0) {
+                discountAmount = (currentSubtotal * discountPercent) / 100;
+                document.getElementById("discount-row").style.display = "flex";
+                document.getElementById("discount-display").innerText = "-₹" + discountAmount.toLocaleString();
+            } else {
+                document.getElementById("discount-row").style.display = "none";
+            }
+
+            // 3. Shipping Rule Logic
+            if(pincode.startsWith("19") && pincode.length >= 2) {
+                if(document.getElementById("c-city").value === "") document.getElementById("c-city").value = "Srinagar";
+                if(document.getElementById("c-state").value === "") document.getElementById("c-state").value = "Jammu & Kashmir";
+            }
+
+            if (paymentMethod === 'online') {
+                shippingCost = 0; 
+            } else {
+                if (pincode.startsWith("190")) {
+                    shippingCost = 50; 
+                } else {
+                    shippingCost = 120; 
+                }
+            }
+
+            // 4. Update Shipping Text
+            const shippingLabel = document.getElementById("shipping-cost");
+            if (shippingCost === 0) {
+                shippingLabel.innerText = "FREE";
+                shippingLabel.style.color = "#25D366";
+            } else {
+                shippingLabel.innerText = "₹" + shippingCost;
+                shippingLabel.style.color = "#aaa";
+            }
+
+            // 5. Update Grand Total (Subtotal - Discount + Shipping)
+            const finalTotal = (currentSubtotal - discountAmount) + shippingCost;
+            document.getElementById("order-total").innerText = "₹" + finalTotal.toLocaleString();
+            
+            return finalTotal; 
+        }
+
+        function changeQty(id, change) {
+            const item = currentCheckoutItems.find(x => x.id === id);
+            if(!item) return;
+            if (change === 1) item.qty++;
+            else { item.qty--; if(item.qty <= 0) { removeItem(id); return; } }
+            syncToLocalStorage(); renderCheckoutList();
+        }
+
+        function removeItem(id) {
+            currentCheckoutItems = currentCheckoutItems.filter(x => x.id !== id);
+            syncToLocalStorage(); renderCheckoutList();
+        }
+
+        function syncToLocalStorage() {
+            let newCartArray = [];
+            currentCheckoutItems.forEach(item => { for(let i=0; i<item.qty; i++) newCartArray.push(item.id); });
+            localStorage.setItem("cart", JSON.stringify(newCartArray));
+            localStorage.setItem("checkout_type", "cart");
+        }
+
+        // --- PAYMENT LOGIC START ---
+        function initiateOrder() {
+            if(currentCheckoutItems.length === 0) return alert("Your cart is empty!");
+
+            const name = document.getElementById("c-name").value;
+            const phone = document.getElementById("c-phone").value;
+            const address = `${document.getElementById("c-flat").value}, ${document.getElementById("c-area").value}`;
+            const pincode = document.getElementById("c-pincode").value;
+            const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
+
+            if(!name || !phone || !address || !pincode) return alert("Please fill all details.");
+            if(phone.length !== 10) return alert("Enter valid 10-digit phone number.");
+
+            const finalTotal = calculateTotal();
+            
+            if (paymentMethod === 'online') {
+                var options = {
+                    "key": "rzp_test_RyzsGzd6pJVN7J", 
+                    "amount": finalTotal * 100, 
+                    "currency": "INR",
+                    "name": "Panun Poshak",
+                    "description": "Purchase",
+                    "image": "https://via.placeholder.com/150?text=Logo",
+                    "handler": function (response){
+                        saveOrderToFirebase(name, phone, address, pincode, finalTotal, "Online (UPI/Card)", response.razorpay_payment_id);
+                    },
+                    "prefill": { "name": name, "contact": phone },
+                    "theme": { "color": "#C5A059" }
+                };
+                var rzp1 = new Razorpay(options);
+                rzp1.open();
+            } else {
+                saveOrderToFirebase(name, phone, address, pincode, finalTotal, "Cash on Delivery", null);
+            }
+        }
+
+        function saveOrderToFirebase(name, phone, address, pincode, total, method, transactionId) {
+            const productString = currentCheckoutItems.map(i => `${i.name} (x${i.qty})`).join(", ");
+            const shortId = "#" + Math.random().toString(36).substr(2, 8).toUpperCase();
+            
+            // Generate Info String for Admin
+            let discountInfo = discountPercent > 0 ? `(Applied ${discountPercent}% off)` : "";
+            const shippingLabel = (method.includes("Online") || total === (currentSubtotal - (currentSubtotal*discountPercent/100))) ? "Free Shipping" : (pincode.startsWith("190") ? "Srinagar (₹50)" : "Standard (₹120)");
+
+            const orderData = {
+                trackingId: shortId, 
+                customer: { name, phone, address, pincode },
+                product: productString,
+                price: total,
+                discount: discountInfo, 
+                shippingInfo: shippingLabel,
+                status: "Placed",
+                paymentMethod: method === "Cash on Delivery" ? "cod" : "upi",
+                transactionId: transactionId || "",
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                trackingUrl: ""
+            };
+
+            const btn = document.querySelector('.confirm-btn');
+            btn.innerText = "Processing...";
+            btn.disabled = true;
+
+            db.collection("orders").add(orderData).then((docRef) => {
+                document.getElementById("success-overlay").style.display = "flex";
+                document.getElementById("final-order-id").innerText = shortId; 
+                
+                const msg = `Salam! I just placed an order on Panun Poshak.\n\n🆔 Order ID: ${shortId}\n👤 Name: ${name}\n💰 Total: ₹${total} ${discountInfo}\n🚚 Shipping: ${shippingLabel}\n📦 Items: ${productString}\n💳 Payment: ${method}\n\nPlease confirm my order.`;
+                const waUrl = `https://wa.me/919103463033?text=${encodeURIComponent(msg)}`;
+                document.getElementById("wa-link").href = waUrl;
+
+                localStorage.removeItem("cart");
+                localStorage.removeItem("cart_discount_percent"); // Clear discount
+            }).catch((error) => {
+                console.error("Error adding document: ", error);
+                alert("Error processing order. Please try again.");
+                btn.innerText = "PROCEED TO PAY";
+                btn.disabled = false;
+            });
+        }
+    </script>
+</body>
+</html>
