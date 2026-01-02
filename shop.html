@@ -26,13 +26,33 @@
         .fade-msg { opacity: 0; transform: translateY(5px); transition: opacity 0.8s ease, transform 0.8s ease; }
         .fade-msg.active { opacity: 1; transform: translateY(0); }
 
-        /* SCROLL LOGIC */
+        /* --- LAYOUT FIXES --- */
         body.has-banner { padding-top: 48px !important; }
-        header { position: absolute !important; top: 0; width: 100%; }
-        body.has-banner header { top: 48px !important; }
+        
+        /* 1. Changed header to RELATIVE so it pushes content down instead of overlapping */
+        header { 
+            position: relative !important; 
+            top: 0; 
+            width: 100%; 
+            background: #050505; /* Dark background to prevent transparency issues */
+            z-index: 100;
+            padding-bottom: 10px;
+        }
 
-        .shop-container { padding-top: 180px; }
-        @media (max-width: 768px) { .shop-container { padding-top: 140px; } }
+        /* 2. Reduced shop container padding since header now takes up space */
+        .shop-container { padding-top: 20px; }
+        @media (max-width: 768px) { .shop-container { padding-top: 20px; } }
+
+        /* 3. Ensure Filter buttons are spaced correctly */
+        .filter-container {
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 10;
+        }
 
         /* --- PREMIUM CART OVERRIDES --- */
         .cart-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); z-index: 10000; opacity: 0; pointer-events: none; transition: 0.4s ease; }
@@ -265,7 +285,8 @@
 
         <div class="acc-tabs">
             <button class="acc-tab active" onclick="switchTab('wishlist')">Favourites</button>
-            <button class="acc-tab" onclick="switchTab('orders')">Orders</button> <button class="acc-tab" onclick="switchTab('tracker')">Track</button>
+            <button class="acc-tab" onclick="switchTab('orders')">Orders</button>
+            <button class="acc-tab" onclick="switchTab('tracker')">Track</button>
             <button class="acc-tab" onclick="switchTab('support')">Help</button>
         </div>
         <div class="acc-content">
@@ -467,7 +488,7 @@
                     document.getElementById('user-pic').style.display = 'block';
                     document.querySelector('.user-placeholder').style.display = 'none';
                     syncFavorites(user.uid);
-                    loadOrderHistory(user.email); // NEW: Load Orders
+                    loadOrderHistory(user.email); 
                 } else {
                     currentUser = null;
                     document.getElementById('auth-guest').style.display = 'block';
@@ -485,27 +506,14 @@
             auth.signOut().then(() => location.reload());
         }
 
-        // --- NEW: ORDER HISTORY LOGIC ---
         function loadOrderHistory(email) {
-            // Note: Currently orders don't save email in checkout, 
-            // but this code is ready for when you add email to checkout.
-            // It searches orders where customer.email matches logged in user.
             const container = document.getElementById('order-history-list');
-            
-            // Temporary Logic: Since checkout saves Name/Phone, we can't reliably fetch by email yet.
-            // We will show a placeholder for now until you update checkout.
-            /* db.collection('orders').where('customer.email', '==', email).get().then(snapshot => {
-                // Render orders...
-            });
-            */
-           
-           // Placeholder for now:
-           container.innerHTML = `
+            container.innerHTML = `
                 <div style="text-align:center; color:#888; padding:20px;">
                     <p>No orders linked to ${email}</p>
                     <small>If you placed an order as Guest, use the Track tab.</small>
                 </div>
-           `;
+            `;
         }
 
         // --- FAVORITES ---
@@ -662,8 +670,6 @@
             const query = document.getElementById('global-search').value;
             if(query) window.location.href = `shop.html?q=${encodeURIComponent(query)}`;
         }
-        const searchInput = document.getElementById('global-search');
-        if(searchInput) { searchInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') runSearch(); }); }
         
         function openCartDrawer() {
             const container = document.getElementById('drawer-items');
