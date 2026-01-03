@@ -12,6 +12,16 @@
     <link rel="stylesheet" href="style.css">
 
     <style>
+        /* --- SMOOTH PAGE LOAD ANIMATION --- */
+        .product-container, .breadcrumbs {
+            opacity: 0;
+            animation: fadeIn 0.6s ease forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         /* --- 1. PREMIUM CART DRAWER STYLES --- */
         .cart-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -117,7 +127,7 @@
         .thumb-btn img { width: 100%; height: 100%; object-fit: cover; }
         .thumb-btn.active { border-color: #C5A059; opacity: 1; transform: translateY(-3px); }
 
-        /* --- PREMIUM QUANTITY SELECTOR STYLES (NEW) --- */
+        /* --- PREMIUM QUANTITY SELECTOR STYLES --- */
         .control-group { margin-top: 20px; display: flex; align-items: center; gap: 15px; height: 50px; }
         
         /* The main container for the buttons */
@@ -157,6 +167,18 @@
         /* Adjust Add to Bag button to match height */
         .btn-bag { height: 50px; padding: 0 30px; display: flex; align-items: center; justify-content: center; }
 
+        /* Breadcrumbs Style */
+        .breadcrumbs {
+            max-width: 1300px; 
+            margin: 20px auto; 
+            padding: 0 40px; 
+            color: #666; 
+            font-size: 0.85rem;
+        }
+        @media(max-width: 768px) {
+            .breadcrumbs { padding: 0 20px; margin-top: 10px; }
+        }
+
     </style>
 </head>
 <body>
@@ -187,13 +209,15 @@
         </nav>
     </header>
 
-    <div class="breadcrumbs" id="breadcrumbs" style="max-width:1300px; margin:20px auto; padding:0 40px; color:#666; font-size:0.85rem;">
+    <div class="breadcrumbs" id="breadcrumbs">
         <a href="index.html" style="color:#888; text-decoration:none;">Home</a> &gt; <a href="shop.html" style="color:#888; text-decoration:none;">Shop</a> &gt; <span id="bc-name">Loading...</span>
     </div>
 
     <div class="product-container">
         <div>
-            <div class="p-image-box"><img id="p-img" src="" alt="Product"></div>
+            <div class="p-image-box">
+                <img id="p-img" src="" alt="Product" loading="eager">
+            </div>
             <div id="thumb-list" class="thumb-gallery"></div>
         </div>
 
@@ -324,6 +348,7 @@
             }
 
             try {
+                // Fetch products for cart usage
                 const snap = await db.collection("products").get();
                 allProducts = snap.docs.map(d => ({id:d.id, ...d.data()}));
             } catch (e) { console.log("Error loading product list", e); }
@@ -331,14 +356,18 @@
             checkCartState();
 
             try {
+                // Fetch CURRENT product details
                 const doc = await db.collection("products").doc(currentProductId).get();
                 if(doc.exists) {
                     const p = doc.data();
                     document.getElementById("p-name").innerText = p.name;
                     document.getElementById("p-price").innerText = "₹" + Number(p.price).toLocaleString();
                     const mainImg = document.getElementById("p-img");
-                    mainImg.src = p.img || p.image;
-                    mainImg.onerror = function() { this.src = 'https://via.placeholder.com/500?text=No+Image'; };
+                    
+                    // --- SPEED FIX: Set src directly, no complex fallback logic to delay render ---
+                    if (p.img) mainImg.src = p.img;
+                    else if (p.images && p.images.length > 0) mainImg.src = p.images[0];
+                    else mainImg.src = 'https://via.placeholder.com/500?text=No+Image';
 
                     // GALLERY LOGIC
                     const galleryBox = document.getElementById("thumb-list");
@@ -355,7 +384,10 @@
 
                     document.getElementById("p-cat").innerText = p.category || "Exclusive Collection";
                     if(p.description) document.getElementById("p-desc").innerText = p.description;
-                    document.getElementById("breadcrumbs").innerHTML = `<a href="index.html" style="color:#888; text-decoration:none;">Home</a> &gt; <a href="shop.html" style="color:#888; text-decoration:none;">Shop</a> &gt; <span style="color:#C5A059;">${p.name}</span>`;
+                    
+                    // --- BREADCRUMB UPDATE ---
+                    document.getElementById("bc-name").innerText = p.name;
+                    document.getElementById("bc-name").style.color = "#C5A059";
 
                     if (p.soldOut) {
                         document.getElementById('action-wrapper').style.display = 'none';
