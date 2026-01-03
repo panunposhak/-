@@ -15,7 +15,7 @@
         /* --- OPTION 3: HIGH CONTRAST GOLD BANNER --- */
         .announcement-bar {
             background: #C5A059; 
-            color: #000000;      
+            color: #000000;       
             border-bottom: 1px solid #000; 
             height: 48px; width: 100%; position: fixed; top: 0; left: 0; z-index: 9000; 
             display: none; justify-content: center; align-items: center;
@@ -810,14 +810,47 @@
             document.getElementById('cart-drawer').classList.add('open');
         }
 
-        function applyCoupon() {
-            const code = document.getElementById("coupon-code").value.trim().toUpperCase();
+        // --- UPDATED REAL COUPON LOGIC (SAME AS CHECKOUT) ---
+        async function applyCoupon() {
+            const codeInput = document.getElementById("coupon-code");
+            const code = codeInput.value.trim().toUpperCase();
             const msg = document.getElementById("coupon-msg");
-            if(code === "PANUN10") {
-                appliedDiscount = 10; msg.style.display="block"; msg.innerText="✓ 10% Discount Applied!"; msg.style.color="#25D366"; openCartDrawer();
-            } else {
-                appliedDiscount = 0; msg.style.display="block"; msg.innerText="Invalid Coupon"; msg.style.color="#ff4d4d"; openCartDrawer();
+            const btn = document.querySelector(".coupon-btn");
+
+            if(!code) return;
+
+            btn.innerText = "...";
+            btn.disabled = true;
+            msg.style.display = "none";
+
+            try {
+                // Check Firebase
+                const doc = await db.collection("coupons").doc(code).get();
+                
+                if(doc.exists) {
+                    const data = doc.data();
+                    appliedDiscount = data.percent;
+                    msg.innerText = `✓ ${code} Applied! (${appliedDiscount}% OFF)`;
+                    msg.style.color = "#25D366";
+                    msg.style.display = "block";
+                } else {
+                    appliedDiscount = 0;
+                    msg.innerText = "❌ Invalid Coupon Code";
+                    msg.style.color = "#ff4d4d";
+                    msg.style.display = "block";
+                }
+            } catch (error) {
+                console.error("Coupon check failed", error);
+                msg.innerText = "Error checking coupon";
+                msg.style.color = "#ff4d4d";
+                msg.style.display = "block";
             }
+
+            btn.innerText = "APPLY";
+            btn.disabled = false;
+            
+            // Refresh to update prices
+            openCartDrawer(); 
         }
 
         function updatePrices(subtotal) {
