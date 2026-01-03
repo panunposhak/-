@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Panun Poshak | Enter the World</title>
     <link rel="stylesheet" href="style.css"> 
     
@@ -11,14 +11,20 @@
         body, html {
             margin: 0;
             padding: 0;
-            height: 100%;
+            width: 100%;
+            /* FIXED: Use dynamic viewport height */
+            height: 100dvh; 
             overflow: hidden; 
-            background: #050505; /* Deep Black Base */
+            background: #1a1a1a; 
+            /* FIXED: Locks screen movement on mobile */
+            overscroll-behavior: none;
+            touch-action: none;
+            position: fixed; /* Hard lock for mobile body */
         }
 
         /* 1. THE SCROLLING BACKGROUND */
         .marquee-container {
-            position: absolute;
+            position: fixed; /* Changed to FIXED to prevent mobile scroll glitch */
             top: 0;
             left: 0;
             width: 100%;
@@ -26,8 +32,10 @@
             z-index: 1; 
             display: flex;
             flex-direction: column; 
-            opacity: 0.25; /* DARKER: Makes the text pop much more */
-            filter: grayscale(30%) contrast(1.2); /* FILM LOOK: Cinematic effect */
+            overflow: hidden; /* Ensures no side-scroll */
+            /* UPDATED: Brighter (0.6 instead of 0.4) */
+            opacity: 0.6; 
+            filter: grayscale(10%) contrast(1.1); 
         }
 
         /* The Scrolling Rows */
@@ -35,15 +43,16 @@
             display: flex;
             width: 200%; /* Wide for loop */
             height: 50%; /* Two equal rows */
-            gap: 20px; /* SPACE BETWEEN IMAGES */
-            padding: 10px 0; /* Vertical spacing */
+            gap: 15px; 
+            padding: 5px 0; 
+            will-change: transform; /* Performance boost */
         }
 
         .marquee-row img {
-            width: 18vw; /* Wider, better sizing */
+            width: 18vw; 
             height: 100%;
-            object-fit: cover; /* Prevents stretching */
-            border-radius: 8px; /* Smooth corners */
+            object-fit: cover; 
+            border-radius: 8px; 
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
@@ -62,8 +71,9 @@
 
         /* 2. VIGNETTE OVERLAY (Darkens Edges) */
         .vignette {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle, rgba(0,0,0,0) 20%, rgba(0,0,0,1) 90%);
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            /* UPDATED: Lighter gradient so center is clearer */
+            background: radial-gradient(circle, rgba(0,0,0,0) 40%, rgba(0,0,0,0.8) 100%);
             z-index: 2; pointer-events: none;
         }
 
@@ -75,13 +85,13 @@
             transform: translate(-50%, -50%);
             z-index: 10;
             
-            background: rgba(10, 10, 10, 0.6); /* Darker glass */
+            background: rgba(20, 20, 20, 0.5); 
             backdrop-filter: blur(20px) saturate(120%);
             border: 1px solid rgba(255, 255, 255, 0.1);
             padding: 70px 100px;
             text-align: center;
             border-radius: 30px;
-            box-shadow: 0 30px 60px rgba(0,0,0,0.9);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.5);
             width: 60%;
             max-width: 700px;
         }
@@ -139,9 +149,9 @@
             background: transparent;
             padding: 30px 0;
             border: none;
-            pointer-events: none; /* Let clicks pass through empty space */
+            pointer-events: none; 
         }
-        .footer-content { pointer-events: auto; } /* Re-enable clicks on links */
+        .footer-content { pointer-events: auto; } 
         .footer-links { display: flex; justify-content: center; gap: 30px; }
         .footer-link-item { font-size: 0.8rem; color: rgba(255,255,255,0.6); text-decoration: none; text-transform: uppercase; letter-spacing: 2px; transition: 0.3s; }
         .footer-link-item:hover { color: #C5A059; }
@@ -149,11 +159,12 @@
 
         /* Mobile Adjustments */
         @media (max-width: 768px) {
-            .brand-title { font-size: 2.8rem; letter-spacing: 2px; }
-            .glass-overlay { padding: 50px 20px; width: 85%; }
-            .marquee-row img { width: 40vw; } /* Bigger images on mobile */
+            .brand-title { font-size: 2.5rem; letter-spacing: 2px; }
+            .glass-overlay { padding: 40px 20px; width: 85%; }
+            .marquee-row img { width: 45vw; } /* Bigger images on mobile to fill gaps */
             .marquee-row { gap: 10px; }
             .footer-links { gap: 15px; font-size: 0.7rem; }
+            #cursor-dot, #cursor-outline { display: none !important; }
         }
     </style>
 </head>
@@ -191,69 +202,86 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     
     <script src="firebase-config.js"></script>
-
     <script src="script.js"></script>
 
     <script>
-        // Note: Cursor animation is now handled by script.js, so I removed it here to prevent bugs.
-
-        // DYNAMIC BACKGROUND LOADER
         document.addEventListener("DOMContentLoaded", async () => {
-            // Safety check for Firebase
-            if (typeof firebase === 'undefined') {
-                console.error("Firebase not loaded!");
-                return;
-            }
+            if (typeof firebase === 'undefined') { console.error("Firebase not loaded!"); return; }
 
             const db = firebase.firestore();
             const topRow = document.getElementById('row-top');
             const bottomRow = document.getElementById('row-bottom');
             
-            // Fetch images
+            // --- NEW: FAST LOAD / CACHE SYSTEM ---
+            const CACHE_KEY = 'panun_cached_banners';
+            
+            // 1. Try to load from Cache first (Instant Load)
+            const cachedData = localStorage.getItem(CACHE_KEY);
             let urls = [];
-            try {
-                const snap = await db.collection("home_banners").orderBy("timestamp", "desc").get();
-                if(!snap.empty) {
-                    urls = snap.docs.map(doc => doc.data().img);
-                } else {
-                    throw new Error("No images found");
-                }
-            } catch (err) {
-                // Fallback Placeholders if no images uploaded or error
-                console.log("Using fallback images");
-                urls = [
-                    'https://images.unsplash.com/photo-1544441893-675973e31985?w=500&q=80',
-                    'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=500&q=80',
-                    'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500&q=80',
-                    'https://images.unsplash.com/photo-1529139574466-a302d2052574?w=500&q=80'
-                ];
+
+            if (cachedData) {
+                console.log("Loading from Cache (Fast Mode)");
+                urls = JSON.parse(cachedData);
+                initMarquee(urls);
+                // Background update (Silent fetch)
+                fetchAndCache(); 
+            } else {
+                // First time load
+                await fetchAndCache(true);
             }
 
-            // Function to fill row with infinite scroll logic
-            const fillRow = (container, imageList) => {
+            // Function to Fetch from Firebase and Update Cache
+            async function fetchAndCache(renderNow = false) {
+                try {
+                    const snap = await db.collection("home_banners").orderBy("timestamp", "desc").get();
+                    if(!snap.empty) {
+                        const newUrls = snap.docs.map(doc => doc.data().img);
+                        localStorage.setItem(CACHE_KEY, JSON.stringify(newUrls)); // Update Cache
+                        
+                        if(renderNow) initMarquee(newUrls);
+                    }
+                } catch (err) {
+                    console.log("Using fallback images", err);
+                    if(renderNow) {
+                        const fallbacks = [
+                            'https://images.unsplash.com/photo-1544441893-675973e31985?w=500&q=80',
+                            'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=500&q=80',
+                            'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500&q=80',
+                            'https://images.unsplash.com/photo-1529139574466-a302d2052574?w=500&q=80'
+                        ];
+                        initMarquee(fallbacks);
+                    }
+                }
+            }
+
+            // Main Animation Logic
+            function initMarquee(imageList) {
+                // Clear previous to avoid duplicates on re-fetch
+                if(topRow) topRow.innerHTML = '';
+                if(bottomRow) bottomRow.innerHTML = '';
+
                 let content = imageList;
-                // Duplicate images until we have enough to fill screen
+                // Duplicate images to ensure smooth loop on wide screens
                 while(content.length < 8) {
                     content = [...content, ...content];
                 }
-                // Double it again for smooth looping
                 const seamlessList = [...content, ...content];
 
-                seamlessList.forEach(url => {
-                    const img = document.createElement('img');
-                    img.src = url;
-                    
-                    // --- LAZY LOADING ADDED HERE ---
-                    img.loading = "lazy";
-                    img.decoding = "async";
-                    // -------------------------------
+                const fillContainer = (container, list) => {
+                    list.forEach(url => {
+                        const img = document.createElement('img');
+                        img.src = url;
+                        // SPEED UP: Use eager loading for visible background
+                        img.loading = "eager"; 
+                        img.decoding = "async";
+                        img.fetchPriority = "high"; // Tell browser this is critical
+                        container.appendChild(img);
+                    });
+                };
 
-                    container.appendChild(img);
-                });
-            };
-
-            if(topRow) fillRow(topRow, urls);
-            if(bottomRow) fillRow(bottomRow, [...urls].reverse());
+                if(topRow) fillContainer(topRow, seamlessList);
+                if(bottomRow) fillContainer(bottomRow, [...seamlessList].reverse());
+            }
         });
     </script>
 </body>
