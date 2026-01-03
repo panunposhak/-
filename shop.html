@@ -12,6 +12,33 @@
     <link rel="stylesheet" href="style.css">
 
     <style>
+        /* --- SMOOTH PAGE LOAD ANIMATIONS --- */
+        body { opacity: 0; animation: pageFadeIn 0.8s ease forwards; }
+        
+        @keyframes pageFadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .product-card {
+            opacity: 0; 
+            animation: cardPopIn 0.6s ease forwards;
+        }
+        
+        /* Staggered animation for grid items */
+        .product-card:nth-child(1) { animation-delay: 0.1s; }
+        .product-card:nth-child(2) { animation-delay: 0.15s; }
+        .product-card:nth-child(3) { animation-delay: 0.2s; }
+        .product-card:nth-child(4) { animation-delay: 0.25s; }
+        .product-card:nth-child(5) { animation-delay: 0.3s; }
+        .product-card:nth-child(6) { animation-delay: 0.35s; }
+        /* ... and so on for others ... */
+
+        @keyframes cardPopIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
         /* --- OPTION 3: HIGH CONTRAST GOLD BANNER --- */
         .announcement-bar {
             background: #C5A059; 
