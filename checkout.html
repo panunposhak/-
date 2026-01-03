@@ -243,11 +243,22 @@
     <script>
         if (typeof firebase === 'undefined' || !firebase.apps.length) { console.error("Firebase not loaded!"); }
         const db = firebase.firestore();
+        const auth = firebase.auth(); // Init Auth
         let currentCheckoutItems = []; 
         let currentSubtotal = 0; 
         let discountPercent = 0;
+        let currentUserEmail = null; // Store user email
 
         document.addEventListener("DOMContentLoaded", () => {
+            // Check Auth Status
+            auth.onAuthStateChanged(user => {
+                if(user) {
+                    currentUserEmail = user.email; // Capture Email
+                    // Auto-fill form if user is logged in (Optional UI Polish)
+                    if(user.displayName) document.getElementById('c-name').value = user.displayName;
+                }
+            });
+
             // Check for pre-applied coupon from Shop page
             const savedDiscount = localStorage.getItem("cart_discount_percent");
             if(savedDiscount) {
@@ -517,6 +528,8 @@
                 status: "Placed",
                 paymentMethod: method === "Cash on Delivery" ? "cod" : "upi",
                 transactionId: transactionId || "",
+                // --- THIS IS THE FIX: SAVE EMAIL ---
+                userEmail: currentUserEmail || "guest", // Saves the email
                 timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                 trackingUrl: ""
             };
