@@ -337,75 +337,6 @@
                 });
             };
 
-            // --- ANNOUNCEMENT LOGIC ---
-            window.loadAnnouncement = function() {
-                db.collection('settings').doc('announcement').get().then(doc => {
-                    if(doc.exists) {
-                        const data = doc.data();
-                        document.getElementById('ann-text').value = data.text || "";
-                        document.getElementById('ann-active').checked = data.isActive || false;
-                    }
-                });
-            };
-
-            window.saveAnnouncement = function() {
-                const text = document.getElementById('ann-text').value;
-                const active = document.getElementById('ann-active').checked;
-                db.collection('settings').doc('announcement').set({
-                    text: text,
-                    isActive: active
-                }).then(() => alert("Announcement Updated!"));
-            };
-
-            // --- COUPON MANAGER (With Limit) ---
-            window.loadCoupons = function() {
-                const list = document.getElementById("coupon-list");
-                list.innerHTML = "<p style='color:#666; text-align:center;'>Loading...</p>";
-                db.collection('coupons').get().then(snap => {
-                    list.innerHTML = "";
-                    if(snap.empty) { list.innerHTML = "<p style='color:#666; text-align:center;'>No active coupons.</p>"; return; }
-                    snap.forEach(doc => {
-                        const data = doc.data();
-                        const limitText = data.limitPerUser ? ` (Limit: ${data.limitPerUser})` : " (Unlimited)";
-                        list.innerHTML += `
-                            <div class="coupon-item">
-                                <div>
-                                    <div class="coupon-code">${doc.id}</div>
-                                    <div class="coupon-disc">${data.percent}% Off ${limitText}</div>
-                                </div>
-                                <button onclick="deleteCoupon('${doc.id}')" class="banner-del" style="width:auto; padding:5px 10px;">Delete</button>
-                            </div>
-                        `;
-                    });
-                });
-            };
-
-            window.addCoupon = function() {
-                const code = document.getElementById('coup-code').value.trim().toUpperCase();
-                const disc = Number(document.getElementById('coup-disc').value);
-                const limit = Number(document.getElementById('coup-limit').value) || 1;
-
-                if(!code || !disc) return alert("Enter Code and Discount %");
-                
-                db.collection('coupons').doc(code).set({
-                    percent: disc,
-                    limitPerUser: limit,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                }).then(() => {
-                    alert("Coupon Added!");
-                    document.getElementById('coup-code').value = "";
-                    document.getElementById('coup-disc').value = "";
-                    document.getElementById('coup-limit').value = "1";
-                    loadCoupons();
-                });
-            };
-
-            window.deleteCoupon = function(code) {
-                if(confirm("Delete coupon " + code + "?")) {
-                    db.collection('coupons').doc(code).delete().then(loadCoupons);
-                }
-            };
-
             // --- UTILITIES ---
             function processFile(file, callback) {
                 if (!file) return;
@@ -483,14 +414,13 @@
                 btn.innerText = "Uploading...";
                 btn.disabled = true;
 
-                // SAVE BOTH CATEGORY AND SUB-CATEGORY
                 db.collection("products").add({
                     name: name,
                     price: Number(price),
                     img: imgData,
                     description: document.getElementById("p-desc").value,
-                    category: document.getElementById("p-cat").value, // Main (Clothing/Acc)
-                    subCategory: document.getElementById("p-subcat").value, // Sub (Pherans/Bags)
+                    category: document.getElementById("p-cat").value,
+                    subCategory: document.getElementById("p-subcat").value,
                     sale: document.getElementById("p-sale").checked,
                     soldOut: document.getElementById("p-sold").checked,
                     images: [imgData],
@@ -533,7 +463,6 @@
                                     <div style="flex:1;">
                                         <h4 style="margin:0; color:#eee;">${p.name}</h4>
                                         <p style="margin:2px 0; color:#888;">₹${p.price}</p>
-                                        <small style="color:#666;">${p.subCategory || p.category}</small>
                                         
                                         <div class="inv-controls">
                                             <button onclick="toggleStatus('${doc.id}', 'sale', ${p.sale})" class="toggle-btn ${sClass}">${p.sale ? 'ON SALE' : 'Set Sale'}</button>
@@ -558,41 +487,6 @@
                 });
             };
 
-            // --- GALLERY MANAGER LOGIC (NEW) ---
-            window.openGalleryManager = function(id) {
-                const modal = document.getElementById('galleryModal');
-                const content = document.getElementById('gallery-content');
-                content.innerHTML = "Loading...";
-                modal.style.display = 'flex';
-
-                db.collection("products").doc(id).get().then(doc => {
-                    const p = doc.data();
-                    const images = p.images || [];
-                    content.innerHTML = "";
-                    if(images.length === 0) { content.innerHTML = "<p style='grid-column:1/-1; color:#666; text-align:center;'>No extra photos found.</p>"; return; }
-
-                    images.forEach(url => {
-                        content.innerHTML += `
-                            <div class="gallery-item">
-                                <img src="${url}">
-                                <button class="gallery-del-btn" onclick="deleteGalleryImage('${id}', '${url}')">X</button>
-                            </div>
-                        `;
-                    });
-                });
-            }
-
-            window.deleteGalleryImage = function(id, url) {
-                if(confirm("Delete this photo from gallery?")) {
-                     db.collection("products").doc(id).update({
-                         images: firebase.firestore.FieldValue.arrayRemove(url)
-                     }).then(() => {
-                         openGalleryManager(id); // Refresh modal
-                         loadInventory(); // Refresh product list
-                     });
-                }
-            }
-
             window.deleteProduct = function(id, name) {
                 showConfirm(`Delete "${name}"?`, () => {
                     db.collection("products").doc(id).delete().then(loadInventory);
@@ -605,6 +499,7 @@
                 db.collection("products").doc(id).update(update).then(loadInventory);
             };
             
+            // --- EDIT DESCRIPTION FUNCTION ---
             window.editDescription = function(id) {
                 db.collection("products").doc(id).get().then(doc => {
                     const currentDesc = doc.data().description || "";
@@ -639,7 +534,76 @@
                 });
             };
 
-            // --- ORDERS (FIXED ID DISPLAY) ---
+            // --- ANNOUNCEMENT LOGIC ---
+            window.loadAnnouncement = function() {
+                db.collection('settings').doc('announcement').get().then(doc => {
+                    if(doc.exists) {
+                        const data = doc.data();
+                        document.getElementById('ann-text').value = data.text || "";
+                        document.getElementById('ann-active').checked = data.isActive || false;
+                    }
+                });
+            };
+
+            window.saveAnnouncement = function() {
+                const text = document.getElementById('ann-text').value;
+                const active = document.getElementById('ann-active').checked;
+                db.collection('settings').doc('announcement').set({
+                    text: text,
+                    isActive: active
+                }).then(() => alert("Announcement Updated!"));
+            };
+
+            // --- COUPON MANAGER ---
+            window.loadCoupons = function() {
+                const list = document.getElementById("coupon-list");
+                list.innerHTML = "<p style='color:#666; text-align:center;'>Loading...</p>";
+                db.collection('coupons').get().then(snap => {
+                    list.innerHTML = "";
+                    if(snap.empty) { list.innerHTML = "<p style='color:#666; text-align:center;'>No active coupons.</p>"; return; }
+                    snap.forEach(doc => {
+                        const data = doc.data();
+                        const limitText = data.limitPerUser ? ` (Limit: ${data.limitPerUser})` : " (Unlimited)";
+                        list.innerHTML += `
+                            <div class="coupon-item">
+                                <div>
+                                    <div class="coupon-code">${doc.id}</div>
+                                    <div class="coupon-disc">${data.percent}% Off ${limitText}</div>
+                                </div>
+                                <button onclick="deleteCoupon('${doc.id}')" class="banner-del" style="width:auto; padding:5px 10px;">Delete</button>
+                            </div>
+                        `;
+                    });
+                });
+            };
+
+            window.addCoupon = function() {
+                const code = document.getElementById('coup-code').value.trim().toUpperCase();
+                const disc = Number(document.getElementById('coup-disc').value);
+                const limit = Number(document.getElementById('coup-limit').value) || 1;
+
+                if(!code || !disc) return alert("Enter Code and Discount %");
+                
+                db.collection('coupons').doc(code).set({
+                    percent: disc,
+                    limitPerUser: limit,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                }).then(() => {
+                    alert("Coupon Added!");
+                    document.getElementById('coup-code').value = "";
+                    document.getElementById('coup-disc').value = "";
+                    document.getElementById('coup-limit').value = "1";
+                    loadCoupons();
+                });
+            };
+
+            window.deleteCoupon = function(code) {
+                if(confirm("Delete coupon " + code + "?")) {
+                    db.collection('coupons').doc(code).delete().then(loadCoupons);
+                }
+            };
+
+            // --- ORDERS (WITH ORDER ID DISPLAY) ---
             window.loadOrders = function() {
                 const list = document.getElementById("order-list");
                 list.innerHTML = "<p style='color:#888; text-align:center;'>Fetching Orders...</p>";
@@ -652,8 +616,8 @@
                     snap.forEach(doc => {
                         const o = doc.data();
                         
-                        // --- THE FIX: USE trackingId IF AVAILABLE, ELSE FALLBACK TO DOC ID ---
-                        const orderID = o.trackingId ? o.trackingId : "#" + doc.id.toUpperCase().substring(0, 8);
+                        // --- ORDER ID GENERATION ---
+                        const orderID = "#" + doc.id.toUpperCase().slice(0, 8);
                         
                         let statusColor = '#888';
                         if(o.status === 'Confirmed') statusColor = '#25D366'; 
@@ -688,6 +652,7 @@
                                     <span style="font-size:0.75rem; color:#C5A059; font-weight:bold;">ID: ${orderID}</span>
                                     <h4 style="margin:0; color:${statusColor}">${o.status || 'Placed'}</h4>
                                 </div>
+                                
                                 <div style="display:flex; justify-content:space-between;">
                                     <p style="margin:5px 0;"><strong>${o.product}</strong></p>
                                     <small style="color:#666;">${o.timestamp ? new Date(o.timestamp.seconds * 1000).toLocaleDateString() : ''}</small>
@@ -712,6 +677,41 @@
                     });
                 });
             };
+
+            // --- GALLERY MANAGER LOGIC ---
+            window.openGalleryManager = function(id) {
+                const modal = document.getElementById('galleryModal');
+                const content = document.getElementById('gallery-content');
+                content.innerHTML = "Loading...";
+                modal.style.display = 'flex';
+
+                db.collection("products").doc(id).get().then(doc => {
+                    const p = doc.data();
+                    const images = p.images || [];
+                    content.innerHTML = "";
+                    if(images.length === 0) { content.innerHTML = "<p style='grid-column:1/-1; color:#666; text-align:center;'>No extra photos found.</p>"; return; }
+
+                    images.forEach(url => {
+                        content.innerHTML += `
+                            <div class="gallery-item">
+                                <img src="${url}">
+                                <button class="gallery-del-btn" onclick="deleteGalleryImage('${id}', '${url}')">X</button>
+                            </div>
+                        `;
+                    });
+                });
+            }
+
+            window.deleteGalleryImage = function(id, url) {
+                if(confirm("Delete this photo from gallery?")) {
+                     db.collection("products").doc(id).update({
+                         images: firebase.firestore.FieldValue.arrayRemove(url)
+                     }).then(() => {
+                         openGalleryManager(id); 
+                         loadInventory(); 
+                     });
+                }
+            }
 
             window.addPartnerLink = function(id) {
                 const link = prompt("Paste the Partner Tracking Link (BlueDart, Delhivery, etc.):");
@@ -739,4 +739,4 @@
         });
     </script>
 </body>
-</html>```
+</html>
