@@ -675,7 +675,7 @@
                     container.innerHTML += `
                         <div class="w-item" style="display:block; cursor:default;">
                             <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-                                <strong style="color:#C5A059;">#${o.trackingId || doc.id.slice(0,8).toUpperCase()}</strong>
+                                <strong style="color:#C5A059;">${o.trackingId || doc.id.slice(0,8).toUpperCase()}</strong>
                                 <span style="color:${statusColor}; font-size:0.8rem;">${o.status}</span>
                             </div>
                             <p style="color:#ccc; font-size:0.85rem; margin:0;">${o.product}</p>
