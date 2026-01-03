@@ -237,7 +237,7 @@
             </p>
         </div>
     </footer>
-   
+    
 
     <script src="firebase-config.js"></script>
     <script>
@@ -253,7 +253,7 @@
             if(savedDiscount) {
                 discountPercent = Number(savedDiscount);
                 if(discountPercent > 0) {
-                    document.getElementById("coupon-code").value = "PANUN10"; // Assume default code
+                    // Just show a generic message if applied from bag, code might not be known
                     showCouponMessage(true, "✓ Discount Applied from Bag!");
                 }
             }
@@ -353,17 +353,38 @@
             calculateTotal();
         }
 
+        // --- UPDATED REAL COUPON LOGIC ---
         function applyCoupon() {
-            const code = document.getElementById("coupon-code").value.trim().toUpperCase();
-            
-            if(code === "PANUN10") {
-                discountPercent = 10;
-                showCouponMessage(true, "✓ 10% Discount Applied!");
-            } else {
+            const codeInput = document.getElementById("coupon-code");
+            const code = codeInput.value.trim().toUpperCase();
+            const btn = document.querySelector(".coupon-btn");
+
+            if(!code) return;
+
+            btn.innerText = "...";
+            btn.disabled = true;
+
+            // CHECK FIREBASE FOR COUPON
+            db.collection("coupons").doc(code).get().then((doc) => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    discountPercent = data.percent;
+                    showCouponMessage(true, `✓ ${code} Applied! (${discountPercent}% OFF)`);
+                } else {
+                    discountPercent = 0;
+                    showCouponMessage(false, "❌ Invalid Coupon Code");
+                }
+                calculateTotal();
+                btn.innerText = "APPLY";
+                btn.disabled = false;
+            }).catch((error) => {
+                console.error("Error getting coupon:", error);
                 discountPercent = 0;
-                showCouponMessage(false, "Invalid Coupon Code");
-            }
-            calculateTotal();
+                showCouponMessage(false, "Error checking coupon");
+                calculateTotal();
+                btn.innerText = "APPLY";
+                btn.disabled = false;
+            });
         }
 
         function showCouponMessage(success, text) {
