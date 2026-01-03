@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -111,11 +111,52 @@
         }
         .checkout-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(197, 160, 89, 0.5); color: white; }
 
-        /* GALLERY THUMBS (From previous step) */
+        /* GALLERY THUMBS */
         .thumb-gallery { display: flex; gap: 12px; margin-top: 20px; overflow-x: auto; padding-bottom: 5px; }
         .thumb-btn { width: 80px; height: 80px; flex-shrink: 0; border-radius: 12px; overflow: hidden; border: 2px solid transparent; cursor: pointer; transition: 0.3s; opacity: 0.6; background: #111; }
         .thumb-btn img { width: 100%; height: 100%; object-fit: cover; }
         .thumb-btn.active { border-color: #C5A059; opacity: 1; transform: translateY(-3px); }
+
+        /* --- PREMIUM QUANTITY SELECTOR STYLES (NEW) --- */
+        .control-group { margin-top: 20px; display: flex; align-items: center; gap: 15px; height: 50px; }
+        
+        /* The main container for the buttons */
+        .qty-selector {
+            display: none; /* Hidden until added */
+            align-items: center;
+            background: #000;
+            border: 1px solid #C5A059;
+            border-radius: 50px;
+            padding: 4px;
+            box-shadow: 0 0 15px rgba(197, 160, 89, 0.2);
+            height: 100%; 
+            box-sizing: border-box;
+        }
+        
+        /* The +/- buttons */
+        .qty-btn {
+            width: 38px; height: 38px;
+            border-radius: 50%;
+            background: #222;
+            border: none;
+            color: #fff;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: 0.3s;
+        }
+        .qty-btn:hover { background: #C5A059; color: #000; box-shadow: 0 0 10px #C5A059; }
+        
+        /* The number display */
+        #qty-display {
+            width: 40px; text-align: center;
+            font-family: 'Playfair Display', serif;
+            font-size: 1.2rem; color: #C5A059; font-weight: bold;
+        }
+
+        /* Adjust Add to Bag button to match height */
+        .btn-bag { height: 50px; padding: 0 30px; display: flex; align-items: center; justify-content: center; }
+
     </style>
 </head>
 <body>
@@ -374,7 +415,7 @@
             window.location.href = "checkout.html";
         }
 
-        // --- PREMIUM DRAWER + COUPONS ---
+        // --- PREMIUM DRAWER + REAL COUPONS ---
         function openCartDrawer() {
             const overlay = document.getElementById('cart-overlay');
             const drawer = document.getElementById('cart-drawer');
@@ -425,24 +466,43 @@
             drawer.classList.add('open');
         }
 
-        function applyCoupon() {
-            const code = document.getElementById("coupon-code").value.trim().toUpperCase();
+        // --- REAL FIREBASE COUPON LOGIC ---
+        async function applyCoupon() {
+            const codeInput = document.getElementById("coupon-code");
+            const code = codeInput.value.trim().toUpperCase();
             const msg = document.getElementById("coupon-msg");
-            
-            // SIMULATED BACKEND LOGIC
-            if(code === "PANUN10") {
-                appliedDiscount = 10; // 10%
-                msg.style.display = "block";
-                msg.innerText = "✓ 10% Discount Applied!";
-                msg.style.color = "#25D366";
-                openCartDrawer(); // Refresh totals
-            } else {
-                appliedDiscount = 0;
-                msg.style.display = "block";
-                msg.innerText = "Invalid Coupon Code";
+            const btn = document.querySelector(".coupon-btn");
+
+            if(!code) return;
+
+            btn.innerText = "...";
+            btn.disabled = true;
+            msg.style.display = "none";
+
+            try {
+                const doc = await db.collection("coupons").doc(code).get();
+                if(doc.exists) {
+                    const data = doc.data();
+                    appliedDiscount = data.percent;
+                    msg.innerText = `✓ ${code} Applied! (${appliedDiscount}% OFF)`;
+                    msg.style.color = "#25D366";
+                    msg.style.display = "block";
+                } else {
+                    appliedDiscount = 0;
+                    msg.innerText = "❌ Invalid Coupon Code";
+                    msg.style.color = "#ff4d4d";
+                    msg.style.display = "block";
+                }
+            } catch (error) {
+                console.error("Coupon check failed", error);
+                msg.innerText = "Error checking coupon";
                 msg.style.color = "#ff4d4d";
-                openCartDrawer(); // Refresh totals
+                msg.style.display = "block";
             }
+
+            btn.innerText = "APPLY";
+            btn.disabled = false;
+            openCartDrawer(); // Refresh totals
         }
 
         function updatePrices(subtotal) {
