@@ -7,6 +7,259 @@
     <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+    
+    <style>
+        /* --- 0. CORE FIXES --- */
+        * { cursor: auto !important; box-sizing: border-box; }
+        .noise-overlay, .gold-glow-sphere { pointer-events: none; z-index: -1; }
+        
+        body {
+            background-color: #050505;
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* --- 1. NAV & HEADER --- */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 5%;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 100;
+            background: rgba(5,5,5,0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .logo { font-family: 'Syncopate', sans-serif; font-weight: 700; font-size: 1.5rem; letter-spacing: 2px; }
+        .logo span { color: var(--tapt-gold, #D4AF37); }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        /* Premium Create Button */
+        .premium-btn {
+            background: rgba(212, 175, 55, 0.1);
+            border: 1px solid var(--tapt-gold, #D4AF37);
+            color: var(--tapt-gold, #D4AF37);
+            padding: 10px 25px;
+            border-radius: 30px;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+            text-decoration: none;
+            transition: 0.3s;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+        }
+
+        .premium-btn:hover {
+            background: var(--tapt-gold, #D4AF37);
+            color: black;
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
+        }
+
+        .nav-icon {
+            font-size: 1.2rem;
+            color: white;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .nav-icon:hover { color: var(--tapt-gold, #D4AF37); }
+
+        /* Header Spacing Fix */
+        .shop-header {
+            text-align: center;
+            padding: 120px 20px 20px; /* Reduced bottom padding */
+            position: relative;
+        }
+        
+        .section-title {
+            font-size: 3rem;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: -2px;
+        }
+        .section-subtitle { color: #888; font-size: 0.9rem; }
+        .gold-text { color: var(--tapt-gold, #D4AF37); text-shadow: 0 0 20px rgba(212, 175, 55, 0.3); }
+
+        /* --- 2. CONTROLS --- */
+        .controls-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 40px; /* Reduced margin */
+            z-index: 10;
+        }
+
+        .search-container input {
+            width: 100%;
+            max-width: 500px;
+            padding: 12px 25px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 50px;
+            color: white;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .filter-btn {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.2);
+            color: rgba(255,255,255,0.7);
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: 0.3s;
+        }
+        .filter-btn.active, .filter-btn:hover {
+            border-color: var(--tapt-gold, #D4AF37);
+            color: var(--tapt-gold, #D4AF37);
+        }
+
+        /* --- 3. GRID & CARDS --- */
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 30px;
+            padding: 0 5%;
+            max-width: 1400px;
+            margin: 0 auto 100px;
+        }
+
+        .product-card {
+            background: rgba(20, 20, 20, 0.6);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 15px;
+            overflow: hidden;
+            text-decoration: none;
+            display: block;
+            transition: 0.3s;
+        }
+
+        .product-card:hover { transform: translateY(-5px); border-color: var(--tapt-gold, #D4AF37); }
+
+        .card-image-wrapper {
+            height: 250px;
+            width: 100%;
+            background: #111;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card-image-wrapper img { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; }
+        .product-card:hover img { transform: scale(1.05); }
+
+        .card-info { padding: 20px; }
+        .p-category { color: #666; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+        .p-title { color: white; font-family: 'Syncopate', sans-serif; font-size: 1rem; font-weight: 700; margin-bottom: 10px; line-height: 1.3; }
+        
+        .p-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px; margin-top: 10px; }
+        .p-price { font-weight: 600; color: white; }
+        .add-icon { width: 30px; height: 30px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.8rem; }
+
+        /* --- 4. ACCOUNT DRAWER (NEW) --- */
+        .account-drawer {
+            position: fixed;
+            top: 0;
+            right: -450px; /* Hidden by default */
+            width: 100%;
+            max-width: 400px;
+            height: 100vh;
+            background: #0a0a0a;
+            border-left: 1px solid rgba(255,255,255,0.1);
+            z-index: 200;
+            transition: right 0.4s cubic-bezier(0.77, 0, 0.175, 1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .account-drawer.open { right: 0; }
+        
+        .drawer-header {
+            padding: 25px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .drawer-header h2 { font-family: 'Syncopate', sans-serif; font-size: 1.2rem; margin: 0; }
+        
+        .drawer-content { padding: 25px; overflow-y: auto; flex: 1; }
+
+        .account-section { margin-bottom: 40px; }
+        .section-head { font-size: 0.8rem; color: var(--tapt-gold, #D4AF37); text-transform: uppercase; margin-bottom: 15px; letter-spacing: 1px; font-weight: 700; }
+
+        /* Order List Styles */
+        .order-item {
+            background: rgba(255,255,255,0.03);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .order-left h4 { margin: 0; font-size: 0.9rem; }
+        .order-left p { margin: 5px 0 0; color: #666; font-size: 0.75rem; }
+        .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; background: rgba(0, 255, 0, 0.1); color: #0f0; border: 1px solid rgba(0, 255, 0, 0.2); }
+
+        /* Uploaded Designs Grid */
+        .design-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .design-thumb { aspect-ratio: 1; background: #222; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
+        .design-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* Track Order Input */
+        .track-input-group { display: flex; gap: 10px; }
+        .track-input-group input { flex: 1; background: #111; border: 1px solid #333; padding: 10px; color: white; border-radius: 5px; }
+        .track-btn { background: var(--tapt-gold, #D4AF37); border: none; padding: 0 15px; border-radius: 5px; font-weight: bold; cursor: pointer; }
+
+        /* Cart & Overlay */
+        .cart-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); z-index: 150; opacity: 0; visibility: hidden; transition: 0.3s; }
+        .cart-overlay.active { opacity: 1; visibility: visible; }
+        
+        /* Re-using drawer styles for Cart */
+        .cart-drawer { position: fixed; top: 0; right: -450px; width: 100%; max-width: 400px; height: 100vh; background: #0a0a0a; border-left: 1px solid rgba(255,255,255,0.1); z-index: 200; transition: right 0.4s; }
+        .cart-drawer.open { right: 0; }
+
+        /* --- MOBILE ADJUSTMENTS --- */
+        @media (max-width: 768px) {
+            .shop-header { padding: 100px 15px 30px; }
+            .section-title { font-size: 2rem; }
+            
+            /* Pinterest 2-Column Grid */
+            .product-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px; /* Tight gap */
+                padding: 0 10px;
+            }
+            
+            .card-image-wrapper { height: 180px; }
+            .card-info { padding: 12px; }
+            .p-title { font-size: 0.85rem; margin-bottom: 5px; }
+            .p-price { font-size: 0.9rem; }
+            .p-category { font-size: 0.6rem; }
+            
+            /* Hide description on mobile for cleaner look */
+            .p-footer { margin-top: 5px; padding-top: 5px; }
+            .add-icon { width: 25px; height: 25px; font-size: 0.7rem; }
+
+            .account-drawer, .cart-drawer { max-width: 85%; }
+        }
+    </style>
 </head>
 <body>
 
@@ -93,7 +346,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
 
     <script>
-        // Firebase Config
+        // Firebase Config (Keep your existing config)
         const firebaseConfig = {
             apiKey: "AIzaSyBmCVQan3wclKDTG2yYbCf_oMO6t0j17wI",
             authDomain: "tapt-337b8.firebaseapp.com",
@@ -113,14 +366,16 @@
 
         function toggleCart() {
             cartDrawer.classList.toggle('open');
-            accountDrawer.classList.remove('open'); 
+            accountDrawer.classList.remove('open'); // Close account if open
             overlay.classList.toggle('active', cartDrawer.classList.contains('open'));
         }
 
         function toggleAccount() {
             accountDrawer.classList.toggle('open');
-            cartDrawer.classList.remove('open'); 
+            cartDrawer.classList.remove('open'); // Close cart if open
             overlay.classList.toggle('active', accountDrawer.classList.contains('open'));
+            
+            // Populate Dummy Data for "Real" Feel
             populateAccountData();
         }
 
@@ -130,12 +385,12 @@
             overlay.classList.remove('active');
         }
 
-        /* --- FAKE DATA POPULATION --- */
+        /* --- FAKE DATA POPULATION (To make account look real immediately) --- */
         function populateAccountData() {
             const orderList = document.getElementById('order-list');
             const designGrid = document.getElementById('design-grid');
 
-            // Mock Orders
+            // 1. Mock Orders
             orderList.innerHTML = `
                 <div class="order-item">
                     <div class="order-left">
@@ -153,7 +408,7 @@
                 </div>
             `;
 
-            // Mock Designs
+            // 2. Mock Designs (Placeholders for now)
             designGrid.innerHTML = `
                 <div class="design-thumb"><img src="https://via.placeholder.com/150/000/333?text=Design1" alt="Design"></div>
                 <div class="design-thumb"><img src="https://via.placeholder.com/150/111/333?text=Design2" alt="Design"></div>
