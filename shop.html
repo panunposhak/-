@@ -2,457 +2,203 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Shop | TAPT.</title>
-    <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shop Collection | Panun Poshak</title>
     
-    <style>
-        /* --- 0. CORE FIXES --- */
-        * { cursor: auto !important; box-sizing: border-box; }
-        .noise-overlay, .gold-glow-sphere { pointer-events: none; z-index: -1; }
-        
-        body {
-            background-color: #050505;
-            color: white;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        /* --- 1. NAV & HEADER --- */
-        nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 5%;
-            position: fixed;
-            top: 0;
-            width: 100%;
-            z-index: 100;
-            background: rgba(5,5,5,0.8);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-        }
-
-        .logo { font-family: 'Syncopate', sans-serif; font-weight: 700; font-size: 1.5rem; letter-spacing: 2px; }
-        .logo span { color: var(--tapt-gold, #D4AF37); }
-
-        .nav-right {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
-        /* Premium Create Button */
-        .premium-btn {
-            background: rgba(212, 175, 55, 0.1);
-            border: 1px solid var(--tapt-gold, #D4AF37);
-            color: var(--tapt-gold, #D4AF37);
-            padding: 10px 25px;
-            border-radius: 30px;
-            text-transform: uppercase;
-            font-size: 0.8rem;
-            letter-spacing: 1px;
-            text-decoration: none;
-            transition: 0.3s;
-            font-family: 'Inter', sans-serif;
-            font-weight: 600;
-        }
-
-        .premium-btn:hover {
-            background: var(--tapt-gold, #D4AF37);
-            color: black;
-            box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
-        }
-
-        .nav-icon {
-            font-size: 1.2rem;
-            color: white;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-        .nav-icon:hover { color: var(--tapt-gold, #D4AF37); }
-
-        /* Header Spacing Fix */
-        .shop-header {
-            text-align: center;
-            padding: 120px 20px 20px; /* Reduced bottom padding */
-            position: relative;
-        }
-        
-        .section-title {
-            font-size: 3rem;
-            margin-bottom: 5px;
-            text-transform: uppercase;
-            letter-spacing: -2px;
-        }
-        .section-subtitle { color: #888; font-size: 0.9rem; }
-        .gold-text { color: var(--tapt-gold, #D4AF37); text-shadow: 0 0 20px rgba(212, 175, 55, 0.3); }
-
-        /* --- 2. CONTROLS --- */
-        .controls-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 20px;
-            margin-bottom: 40px; /* Reduced margin */
-            z-index: 10;
-        }
-
-        .search-container input {
-            width: 100%;
-            max-width: 500px;
-            padding: 12px 25px;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 50px;
-            color: white;
-            font-family: 'Inter', sans-serif;
-        }
-
-        .filter-btn {
-            background: transparent;
-            border: 1px solid rgba(255,255,255,0.2);
-            color: rgba(255,255,255,0.7);
-            padding: 8px 20px;
-            border-radius: 30px;
-            font-size: 0.8rem;
-            cursor: pointer;
-            text-transform: uppercase;
-            transition: 0.3s;
-        }
-        .filter-btn.active, .filter-btn:hover {
-            border-color: var(--tapt-gold, #D4AF37);
-            color: var(--tapt-gold, #D4AF37);
-        }
-
-        /* --- 3. GRID & CARDS --- */
-        .product-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 30px;
-            padding: 0 5%;
-            max-width: 1400px;
-            margin: 0 auto 100px;
-        }
-
-        .product-card {
-            background: rgba(20, 20, 20, 0.6);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 15px;
-            overflow: hidden;
-            text-decoration: none;
-            display: block;
-            transition: 0.3s;
-        }
-
-        .product-card:hover { transform: translateY(-5px); border-color: var(--tapt-gold, #D4AF37); }
-
-        .card-image-wrapper {
-            height: 250px;
-            width: 100%;
-            background: #111;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .card-image-wrapper img { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; }
-        .product-card:hover img { transform: scale(1.05); }
-
-        .card-info { padding: 20px; }
-        .p-category { color: #666; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
-        .p-title { color: white; font-family: 'Syncopate', sans-serif; font-size: 1rem; font-weight: 700; margin-bottom: 10px; line-height: 1.3; }
-        
-        .p-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px; margin-top: 10px; }
-        .p-price { font-weight: 600; color: white; }
-        .add-icon { width: 30px; height: 30px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.8rem; }
-
-        /* --- 4. ACCOUNT DRAWER (NEW) --- */
-        .account-drawer {
-            position: fixed;
-            top: 0;
-            right: -450px; /* Hidden by default */
-            width: 100%;
-            max-width: 400px;
-            height: 100vh;
-            background: #0a0a0a;
-            border-left: 1px solid rgba(255,255,255,0.1);
-            z-index: 200;
-            transition: right 0.4s cubic-bezier(0.77, 0, 0.175, 1);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .account-drawer.open { right: 0; }
-        
-        .drawer-header {
-            padding: 25px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .drawer-header h2 { font-family: 'Syncopate', sans-serif; font-size: 1.2rem; margin: 0; }
-        
-        .drawer-content { padding: 25px; overflow-y: auto; flex: 1; }
-
-        .account-section { margin-bottom: 40px; }
-        .section-head { font-size: 0.8rem; color: var(--tapt-gold, #D4AF37); text-transform: uppercase; margin-bottom: 15px; letter-spacing: 1px; font-weight: 700; }
-
-        /* Order List Styles */
-        .order-item {
-            background: rgba(255,255,255,0.03);
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 10px;
-            border: 1px solid rgba(255,255,255,0.05);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .order-left h4 { margin: 0; font-size: 0.9rem; }
-        .order-left p { margin: 5px 0 0; color: #666; font-size: 0.75rem; }
-        .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; background: rgba(0, 255, 0, 0.1); color: #0f0; border: 1px solid rgba(0, 255, 0, 0.2); }
-
-        /* Uploaded Designs Grid */
-        .design-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-        .design-thumb { aspect-ratio: 1; background: #222; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
-        .design-thumb img { width: 100%; height: 100%; object-fit: cover; }
-
-        /* Track Order Input */
-        .track-input-group { display: flex; gap: 10px; }
-        .track-input-group input { flex: 1; background: #111; border: 1px solid #333; padding: 10px; color: white; border-radius: 5px; }
-        .track-btn { background: var(--tapt-gold, #D4AF37); border: none; padding: 0 15px; border-radius: 5px; font-weight: bold; cursor: pointer; }
-
-        /* Cart & Overlay */
-        .cart-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); z-index: 150; opacity: 0; visibility: hidden; transition: 0.3s; }
-        .cart-overlay.active { opacity: 1; visibility: visible; }
-        
-        /* Re-using drawer styles for Cart */
-        .cart-drawer { position: fixed; top: 0; right: -450px; width: 100%; max-width: 400px; height: 100vh; background: #0a0a0a; border-left: 1px solid rgba(255,255,255,0.1); z-index: 200; transition: right 0.4s; }
-        .cart-drawer.open { right: 0; }
-
-        /* --- MOBILE ADJUSTMENTS --- */
-        @media (max-width: 768px) {
-            .shop-header { padding: 100px 15px 30px; }
-            .section-title { font-size: 2rem; }
-            
-            /* Pinterest 2-Column Grid */
-            .product-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 10px; /* Tight gap */
-                padding: 0 10px;
-            }
-            
-            .card-image-wrapper { height: 180px; }
-            .card-info { padding: 12px; }
-            .p-title { font-size: 0.85rem; margin-bottom: 5px; }
-            .p-price { font-size: 0.9rem; }
-            .p-category { font-size: 0.6rem; }
-            
-            /* Hide description on mobile for cleaner look */
-            .p-footer { margin-top: 5px; padding-top: 5px; }
-            .add-icon { width: 25px; height: 25px; font-size: 0.7rem; }
-
-            .account-drawer, .cart-drawer { max-width: 85%; }
-        }
-    </style>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div class="noise-overlay"></div>
-    <div class="gold-glow-sphere"></div>
+    <div id="cursor-dot" class="cursor-dot"></div>
+    <div id="cursor-outline" class="cursor-outline"></div>
 
-    <nav>
-        <div class="logo">TAPT<span>.</span></div>
-        <div class="nav-right">
-            <a href="customize.html" class="premium-btn">Create</a>
-            <div class="nav-icon" onclick="toggleAccount()">
-                <i class="fa-regular fa-user"></i>
+    <div id="announcement-bar" class="announcement-bar">
+        <span id="announcement-text" class="fade-msg"></span>
+    </div>
+
+    <header>
+        <div class="header-top">
+            <div style="display: flex; align-items: center;">
+                <div class="header-icon-btn" onclick="openAccountDrawer()">
+                    👤 <span style="font-size:0.7rem; margin-left:5px; text-transform:uppercase; letter-spacing:1px; display:none;" id="acc-label">Account</span>
+                </div>
             </div>
-            <div class="nav-icon" style="position: relative;" onclick="toggleCart()">
-                <i class="fa-solid fa-bag-shopping"></i>
-                <span id="cart-count" style="position: absolute; top: -5px; right: -5px; background: var(--tapt-gold, #D4AF37); color: black; font-size: 10px; width: 15px; height: 15px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">0</span>
+            <a href="index.html" class="logo" style="margin-left: -40px;">PANUN POSHAK</a>
+            <div style="display:flex; align-items:center;">
+                <div class="header-icon-btn" style="margin-right:0;" onclick="openCartDrawer()">
+                    🛒 <span id="cart-count" style="font-size:0.8rem; background:#C5A059; color:black; padding:2px 6px; border-radius:50%; margin-left:5px;">0</span>
+                </div>
             </div>
+        </div>
+        
+        <div class="search-box" style="margin: 10px auto; width: 90%;">
+            <input type="text" id="global-search" placeholder="Search Collection..." oninput="instantSearch()">
+            <button onclick="runSearch()">🔍</button>
+        </div>
+
+        <nav class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="shop.html">Shop All</a>
+            <a href="shop.html?q=pheran">Pherans</a>
+            <a href="shop.html?q=shawl">Shawls</a>
+            <a href="shop.html?q=bags">Bags</a>
+            <a href="shop.html?q=men">Men</a>
+            <a href="about.html">Our Story</a>
+        </nav>
+    </header>
+
+    <div class="filter-container">
+        <button onclick="window.location.href='shop.html'" class="filter-btn" id="btn-all">All</button>
+        <button onclick="window.location.href='shop.html?q=clothing'" class="filter-btn" id="btn-clothing">Clothing</button>
+        <button onclick="window.location.href='shop.html?q=bags'" class="filter-btn" id="btn-bags">Bags</button>
+        <button onclick="window.location.href='shop.html?q=shawl'" class="filter-btn" id="btn-shawl">Shawls</button>
+        <button onclick="window.location.href='shop.html?q=accessories'" class="filter-btn" id="btn-accessories">Accessories</button>
+    </div>
+
+    <section class="shop-container">
+        <h2 id="collection-title" style="text-align:center; color:#C5A059; font-family:'Playfair Display', serif; margin-bottom:30px;">Current Collection</h2>
+        <div id="product-grid" class="product-grid">
+            <p style="text-align:center; color:white; width:100%; grid-column:1/-1;">Loading Collection...</p>
+        </div>
+    </section>
+    
+    <footer class="custom-footer">
+        <div class="footer-logo-container">
+            <h2 class="footer-logo">PANUN POSHAK</h2>
+            <div class="footer-logo-circle"></div>
+        </div>
+
+        <div class="footer-nav">
+            <a href="about.html" class="footer-link">Our Story</a>
+            <a href="https://wa.me/917006083503" class="footer-link">Whatsapp</a>
+            <a href="https://instagram.com/panu.nposhak" class="footer-link">Instagram</a>
+            <a href="mailto:poshakpanun@gmail.com" class="footer-link">Email Support</a>
+        </div>
+
+        <div class="footer-divider"></div>
+
+        <div class="footer-copyright">
+            &copy; 2026 Panun Poshak. Heritage Reimagined.<br>
+            Made with <span style="color: #ff4d4d;">❤️</span> in Srinagar, Kashmir.
+        </div>
+    </footer>
+
+    <a href="https://wa.me/917006083503" target="_blank" class="chat-float" title="WhatsApp Us">
+        <svg viewBox="0 0 24 24"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.36 3.45 16.86L2.05 22L7.3 20.62C8.75 21.41 10.38 21.83 12.04 21.83C17.5 21.83 21.95 17.38 21.95 11.92C21.95 9.27 20.92 6.78 19.05 4.91C17.18 3.03 14.69 2 12.04 2M12.05 3.67C14.25 3.67 16.31 4.53 17.87 6.09C19.42 7.65 20.28 9.72 20.28 11.92C20.28 16.46 16.58 20.15 12.04 20.15C10.56 20.15 9.11 19.76 7.85 19L7.55 18.83L4.43 19.65L5.26 16.61L5.06 16.29C4.24 15 3.8 13.47 3.8 11.91C3.81 7.37 7.5 3.67 12.05 3.67Z"/></svg>
+    </a>
+
+    <div class="ai-trigger" onclick="toggleChat()">🤖</div>
+
+    <div class="chat-window" id="ai-chat">
+        <div class="chat-header">
+            <span>Panun Assistant</span>
+            <span onclick="toggleChat()" style="cursor:pointer; font-size:1.2rem;">&times;</span>
+        </div>
+        <div class="chat-body" id="chat-body">
+            <div class="msg bot">Salaam! 👋 I am the Panun Poshak Smart Assistant.<br>I can check order status, answer queries, or connect you to a human.</div>
+            <div class="chat-chips">
+                <div class="chip" onclick="botReply('track')">📦 Track Order</div>
+                <div class="chip" onclick="botReply('shipping')">🚚 Shipping info</div>
+                <div class="chip" onclick="botReply('return')">🔄 Returns</div>
+                <div class="chip" onclick="botReply('human')">👤 Talk to Human</div>
+            </div>
+        </div>
+        <div class="chat-footer">
+            <input type="text" id="chat-input" class="chat-input" placeholder="Type here..." onkeypress="handleChatKey(event)">
+            <button class="chat-send" onclick="sendUserMessage()">➤</button>
+        </div>
+    </div>
+
+    <div class="cart-overlay" id="account-overlay" onclick="closeAccountDrawer()"></div>
+    <div class="account-drawer" id="account-drawer">
+        <div class="acc-header">
+            <button class="close-cart" onclick="closeAccountDrawer()" style="position: absolute; top: 15px; right: 15px;">&times;</button>
+            <div id="auth-guest" style="display:block;">
+                <div class="user-placeholder">👤</div>
+                <h2 style="font-size:1.5rem; margin:0; color:white;">Welcome</h2>
+                <p style="margin:5px 0 15px 0; color:#888; font-size:0.8rem;">Join the Panun Poshak Family</p>
+                <button onclick="googleLogin()" class="google-btn">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18"> 
+                    Sign in with Google
+                </button>
+            </div>
+            <div id="auth-user" style="display:none;">
+                <img src="" id="user-pic" class="user-profile-pic">
+                <h2 id="user-name" style="font-size:1.3rem; margin:0; color:white;">User Name</h2>
+                <p id="user-email" style="margin:5px 0 0 0; color:#888; font-size:0.7rem;">user@email.com</p>
+                <span class="logout-link" onclick="logout()">Sign Out</span>
+            </div>
+        </div>
+
+        <div class="acc-tabs">
+            <button class="acc-tab active" onclick="switchTab('wishlist')">Favourites</button>
+            <button class="acc-tab" onclick="switchTab('orders')">Orders</button>
+            <button class="acc-tab" onclick="switchTab('tracker')">Track</button>
+            <button class="acc-tab" onclick="switchTab('support')">Help</button>
+        </div>
+        <div class="acc-content">
+            <div id="tab-wishlist" class="acc-section active">
+                <div id="wishlist-items">
+                    <p style="color:#666; text-align:center; margin-top:20px;">Your favourites list is empty.</p>
+                </div>
+            </div>
+
+            <div id="tab-orders" class="acc-section">
+                <div id="order-history-list">
+                    <p style="color:#666; text-align:center; margin-top:20px;">
+                        <span style="display:block; font-size:2rem;">📦</span>
+                        Sign in to view orders linked to your email.
+                    </p>
+                </div>
+            </div>
+
+            <div id="tab-tracker" class="acc-section">
+                <p style="color:#ccc; font-size:0.9rem; margin-bottom:15px;">Track your recent purchase.</p>
+                <input type="text" id="mini-track-input" placeholder="Order ID (e.g. #A1B2C3)" style="width:100%; padding:10px; margin-bottom:10px; background:#222; border:1px solid #444; color:white; border-radius:5px;">
+                <button onclick="miniTrack()" style="width:100%; padding:12px; background:#C5A059; color:black; font-weight:bold; border:none; cursor:pointer; border-radius:5px;">TRACK NOW</button>
+            </div>
+
+            <div id="tab-support" class="acc-section">
+                <a href="https://wa.me/917006083503" target="_blank" style="display:block; padding:15px; background:#25D366; color:white; text-align:center; border-radius:10px; text-decoration:none; font-weight:bold; margin-bottom:15px;">Chat on WhatsApp</a>
+                <a href="mailto:poshakpanun@gmail.com" style="display:block; padding:15px; background:#333; color:white; text-align:center; border-radius:10px; text-decoration:none; font-weight:bold;">Email Support</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="cart-overlay" id="cart-overlay" onclick="closeCartDrawer()"></div>
+    <div class="cart-drawer" id="cart-drawer">
+        <div class="cart-header">
+            <h2>Your Bag</h2>
+            <button class="close-cart" onclick="closeCartDrawer()">&times;</button>
+        </div>
+        <div class="cart-items" id="drawer-items"></div>
+        <div class="cart-footer">
+            <div class="coupon-section">
+                <input type="text" id="coupon-code" class="coupon-input" placeholder="Coupon Code">
+                <button onclick="applyCoupon()" class="coupon-btn">APPLY</button>
+            </div>
+            <div id="coupon-msg" style="font-size:0.8rem; color:#25D366; margin-bottom:10px; display:none;"></div>
+            <div class="cart-total-row"><span>Subtotal</span><span id="subtotal-price">₹0</span></div>
+            <div class="cart-total-row" id="discount-row" style="display:none; color:#C5A059;"><span>Discount</span><span id="discount-amount">-₹0</span></div>
+            <div class="cart-final-total"><span>Total</span><span id="drawer-total" style="color:#C5A059;">₹0</span></div>
+            <button onclick="goToCheckout()" class="checkout-btn">CHECKOUT SECURELY</button>
+        </div>
+    </div>
+
+    <nav class="bottom-bar">
+        <a href="index.html" class="bar-item">🏠 <small>Home</small></a>
+        <a href="tracker.html" class="bar-item">🚚 <small>Track</small></a>
+        <div class="bar-item" onclick="openCartDrawer()">
+          🛒 <span id="cart-count-bar" style="background:#C5A059; color:black; padding:2px 6px; border-radius:50%; font-size:0.8rem; position:absolute; top:5px; right:30px;">0</span>
+          <small>Bag</small>
         </div>
     </nav>
 
-    <div class="shop-header">
-        <h1 class="section-title">Select Your <span class="gold-text">Legacy</span></h1>
-        <p class="section-subtitle">Premium NFC Hardware.</p>
-    </div>
-
-    <div class="container">
-        <div class="controls-wrapper">
-            <div class="search-container">
-                <input type="text" id="shop-search" placeholder="Search collection...">
-            </div>
-            <div class="category-filter">
-                <button class="filter-btn active" data-filter="all">All</button>
-                <button class="filter-btn" data-filter="card">Cards</button>
-                <button class="filter-btn" data-filter="tag">Tags</button>
-                <button class="filter-btn" data-filter="music">Music</button>
-            </div>
-        </div>
-
-        <div class="product-grid" id="shop-grid">
-            <p style="text-align: center; color: #444; width: 100%;">Loading...</p>
-        </div>
-    </div>
-
-    <div class="cart-overlay" id="overlay" onclick="closeAllDrawers()"></div>
-
-    <div class="cart-drawer" id="cart-drawer">
-        <div class="drawer-header">
-            <h2>Your Bag</h2>
-            <button style="background:none; border:none; color:white; font-size:1.5rem; cursor:pointer;" onclick="toggleCart()">×</button>
-        </div>
-        <div style="padding:20px; color:#888;">Cart functionality here...</div>
-    </div>
-
-    <div class="account-drawer" id="account-drawer">
-        <div class="drawer-header">
-            <h2>My Legacy</h2>
-            <button style="background:none; border:none; color:white; font-size:1.5rem; cursor:pointer;" onclick="toggleAccount()">×</button>
-        </div>
-        <div class="drawer-content">
-            
-            <div class="account-section">
-                <div class="section-head">Track Order</div>
-                <div class="track-input-group">
-                    <input type="text" placeholder="Order ID (e.g., #TAPT-8821)">
-                    <button class="track-btn"><i class="fa-solid fa-arrow-right"></i></button>
-                </div>
-            </div>
-
-            <div class="account-section">
-                <div class="section-head">Recent Orders</div>
-                <div id="order-list">
-                    </div>
-            </div>
-
-            <div class="account-section">
-                <div class="section-head">Your Designs</div>
-                <div class="design-grid" id="design-grid">
-                    </div>
-            </div>
-        </div>
-    </div>
-
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-
-    <script>
-        // Firebase Config (Keep your existing config)
-        const firebaseConfig = {
-            apiKey: "AIzaSyBmCVQan3wclKDTG2yYbCf_oMO6t0j17wI",
-            authDomain: "tapt-337b8.firebaseapp.com",
-            databaseURL: "https://tapt-337b8-default-rtdb.firebaseio.com",
-            projectId: "tapt-337b8",
-            storageBucket: "tapt-337b8.firebasestorage.app",
-            messagingSenderId: "887956121124",
-            appId: "1:887956121124:web:6856680bf75aa3bacddab1",
-            measurementId: "G-2CB8QXYNJY"
-        };
-        firebase.initializeApp(firebaseConfig);
-
-        /* --- UI LOGIC --- */
-        const overlay = document.getElementById('overlay');
-        const cartDrawer = document.getElementById('cart-drawer');
-        const accountDrawer = document.getElementById('account-drawer');
-
-        function toggleCart() {
-            cartDrawer.classList.toggle('open');
-            accountDrawer.classList.remove('open'); // Close account if open
-            overlay.classList.toggle('active', cartDrawer.classList.contains('open'));
-        }
-
-        function toggleAccount() {
-            accountDrawer.classList.toggle('open');
-            cartDrawer.classList.remove('open'); // Close cart if open
-            overlay.classList.toggle('active', accountDrawer.classList.contains('open'));
-            
-            // Populate Dummy Data for "Real" Feel
-            populateAccountData();
-        }
-
-        function closeAllDrawers() {
-            cartDrawer.classList.remove('open');
-            accountDrawer.classList.remove('open');
-            overlay.classList.remove('active');
-        }
-
-        /* --- FAKE DATA POPULATION (To make account look real immediately) --- */
-        function populateAccountData() {
-            const orderList = document.getElementById('order-list');
-            const designGrid = document.getElementById('design-grid');
-
-            // 1. Mock Orders
-            orderList.innerHTML = `
-                <div class="order-item">
-                    <div class="order-left">
-                        <h4>#TAPT-9921</h4>
-                        <p>Matte Black Card • 2 Items</p>
-                    </div>
-                    <div class="status-badge">Delivered</div>
-                </div>
-                <div class="order-item">
-                    <div class="order-left">
-                        <h4>#TAPT-8842</h4>
-                        <p>Gold PVC Tag • 1 Item</p>
-                    </div>
-                    <div class="status-badge" style="color:orange; background:rgba(255,165,0,0.1); border-color:rgba(255,165,0,0.2);">Shipped</div>
-                </div>
-            `;
-
-            // 2. Mock Designs (Placeholders for now)
-            designGrid.innerHTML = `
-                <div class="design-thumb"><img src="https://via.placeholder.com/150/000/333?text=Design1" alt="Design"></div>
-                <div class="design-thumb"><img src="https://via.placeholder.com/150/111/333?text=Design2" alt="Design"></div>
-                <div class="design-thumb" style="border:1px dashed #444; display:flex; align-items:center; justify-content:center; color:#444;"><i class="fa-solid fa-plus"></i></div>
-            `;
-        }
-
-        /* --- PRODUCT LOADING --- */
-        document.addEventListener('DOMContentLoaded', () => {
-            const grid = document.getElementById('shop-grid');
-            const dbRef = firebase.database().ref('products');
-
-            dbRef.on('value', (snapshot) => {
-                grid.innerHTML = "";
-                if(!snapshot.exists()) {
-                    grid.innerHTML = "<p>No products found.</p>";
-                    return;
-                }
-
-                snapshot.forEach((child) => {
-                    const p = child.val();
-                    const img = (p.images && p.images[0]) ? p.images[0] : 'https://via.placeholder.com/300x300/111/333?text=TAPT';
-                    const typeLabel = p.type === 'tag' ? 'NFC TAG' : 'NFC CARD';
-                    
-                    const card = document.createElement('a');
-                    card.href = `product.html?id=${child.key}`;
-                    card.className = "product-card";
-                    card.innerHTML = `
-                        <div class="card-image-wrapper">
-                            <img src="${img}" alt="${p.title}">
-                        </div>
-                        <div class="card-info">
-                            <div class="p-category">${typeLabel}</div>
-                            <div class="p-title">${p.title}</div>
-                            <div class="p-footer">
-                                <div class="p-price">₹${p.price}</div>
-                                <div class="add-icon"><i class="fa-solid fa-plus"></i></div>
-                            </div>
-                        </div>
-                    `;
-                    grid.appendChild(card);
-                });
-            });
-        });
-    </script>
+    <script src="firebase-config.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
